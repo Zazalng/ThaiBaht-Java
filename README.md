@@ -1,4 +1,8 @@
-# 🌟 Thai Baht Text — Convert BigDecimal to Thai Baht Words
+# 🌟 Thai Baht — Convert BigDecimal to Thai Baht Words
+![Maven Central](https://img.shields.io/maven-central/v/io.github.zazalng/thai-baht.svg?label=Maven%20Central)
+![Java](https://img.shields.io/badge/JDK-8%2B-green)
+![License](https://img.shields.io/github/license/Zazalng/ThaiBaht-Java)
+[![Javadoc](https://img.shields.io/badge/javadoc-latest-blue.svg)](https://zazalng.github.io/ThaiBaht-Java/latest/)
 
 Effortlessly convert any Java `BigDecimal` into fully accurate and beautifully formatted **Thai Baht text**.  
 This library is designed for **enterprise systems**, **payment processors**, **e-tax invoices**, **Thai government forms**, and any application requiring Thai monetary wording.
@@ -34,7 +38,7 @@ Minimal, lightweight, and works on **Java 8+**.
 ```xml
 <dependency>
     <groupId>io.github.zazalng</groupId>
-    <artifactId>that-baht</artifactId>
+    <artifactId>thai-baht</artifactId>
     <version>1.0.0</version>
 </dependency>
 ```
