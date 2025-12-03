@@ -93,13 +93,13 @@ mvn test
 ## 🏗 Project Structure
 ```
 src/
- └── main/java/th/co/miyuri/bahttext/
-       ├── BahtText.java
+ └── main/java/io/github/zazalng/
+       ├── ThaiBaht.java
        ├── ThaiTextConverter.java
        └── ThaiBahtConfig.java
 
 src/
- └── test/java/th/co/miyuri/bahttext/
+ └── test/java/io/github/zazalng/
        └── ThaiBahtConverterTest.java
 ```
 
