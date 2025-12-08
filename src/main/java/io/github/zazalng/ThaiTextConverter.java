@@ -73,7 +73,7 @@ final class ThaiTextConverter {
 
         // negative handling
         if (normalized.signum() < 0) {
-            return "ลบ" + sb.toString();
+            return config.getNegativePrefix() + sb.toString();
         }
         return sb.toString();
     }

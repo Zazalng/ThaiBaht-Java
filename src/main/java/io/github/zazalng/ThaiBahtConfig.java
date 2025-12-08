@@ -28,10 +28,12 @@ package io.github.zazalng;
 public final class ThaiBahtConfig {
     private final boolean useUnit; // include "บาท" and "สตางค์" / "ถ้วน"
     private final boolean formal; // placeholder for formal vs casual rules (future)
+    private final String negativePrefix; // prefix for negative config
 
-    private ThaiBahtConfig(boolean useUnit, boolean formal) {
+    private ThaiBahtConfig(boolean useUnit, boolean formal, String negativePrefix) {
         this.useUnit = useUnit;
         this.formal = formal;
+        this.negativePrefix = negativePrefix;
     }
 
     /**
@@ -49,12 +51,19 @@ public final class ThaiBahtConfig {
     public boolean isFormal() { return formal; }
 
     /**
+     * Return negative prefix wording rules should be used.
+     *
+     * @return {@code negativePrefix} current prefix set by config
+     */
+    public String getNegativePrefix() { return negativePrefix; }
+
+    /**
      * Obtain the default configuration. The default is to include unit words and use formal wording.
      *
      * @return a default immutable {@link ThaiBahtConfig}
      */
     public static ThaiBahtConfig defaultConfig() {
-        return new ThaiBahtConfig(true, true);
+        return new ThaiBahtConfig(true, true, "ลบ");
     }
 
     /**
@@ -70,6 +79,7 @@ public final class ThaiBahtConfig {
     public static final class Builder {
         private boolean useUnit = true;
         private boolean formal = true;
+        private String negativePrefix = "ลบ";
 
         /**
          * Set whether unit words should be included ("บาท"/"สตางค์"/"ถ้วน").
@@ -88,10 +98,18 @@ public final class ThaiBahtConfig {
         public Builder formal(boolean v) { this.formal = v; return this; }
 
         /**
+         * Set prefix wording for negative rules should be used.
+         *
+         * @param negativePrefix new prefix to use
+         * @return this builder
+         */
+        public Builder setPrefix(String negativePrefix){ this.negativePrefix = negativePrefix; return this; }
+
+        /**
          * Build an immutable {@link ThaiBahtConfig} instance with the configured values.
          *
          * @return a new {@code ThaiBahtConfig}
          */
-        public ThaiBahtConfig build() { return new ThaiBahtConfig(useUnit, formal); }
+        public ThaiBahtConfig build() { return new ThaiBahtConfig(useUnit, formal, negativePrefix); }
     }
 }
