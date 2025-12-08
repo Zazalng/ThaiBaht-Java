@@ -22,6 +22,7 @@ This library is designed for **enterprise systems**, **payment processors**, **e
 
 ### ✔ Negative number support
 - Adds prefix `ลบ` for negative values
+- Enhance custom prefix for negative values though config object
 
 ### ✔ Configurable output
 - Include/omit currency unit (`บาท`, `สตางค์`)
