@@ -39,7 +39,7 @@ Minimal, lightweight, and works on **Java 8+**.
 <dependency>
     <groupId>io.github.zazalng</groupId>
     <artifactId>thai-baht</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
