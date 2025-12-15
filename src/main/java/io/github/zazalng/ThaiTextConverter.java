@@ -27,10 +27,31 @@ import java.math.RoundingMode;
  * (truncation) before converting; negative values are prefixed with
  * the Thai word for minus ("ลบ").
  * </p>
+ * <p>
+ * <strong>Conversion Algorithm:</strong>
+ * <ul>
+ *   <li>Amounts are normalized to 2 decimal places (satang precision)</li>
+ *   <li>Negative amounts are handled by extracting the absolute value and prefixing with the negative prefix</li>
+ *   <li>The integer part (baht) and fractional part (satang) are converted separately to Thai text</li>
+ *   <li>Special handling for "ล้าน" (million) boundaries and Thai digit naming conventions</li>
+ * </ul>
+ * </p>
+ * <p>
+ * <strong>Thai Digit Naming Rules:</strong>
+ * <ul>
+ *   <li>Standard digits 0-9 are mapped to Thai words: "ศูนย์" to "เก้า"</li>
+ *   <li>The digit "หนึ่ง" (one) becomes "เอ็ด" when it appears in the ones place of numbers greater than 10</li>
+ *   <li>The digit "สอง" (two) becomes "ยี่" when it appears in the tens place</li>
+ *   <li>Large numbers are broken down into "ล้าน" (million) segments for readability</li>
+ * </ul>
+ * </p>
  *
- * @implNote The conversion algorithm handles repeated "ล้าน" segments and
- * special Thai-language digit naming rules (for example: last-digit "หนึ่ง"
- * becomes "เอ็ด" in numbers greater than ten).
+ * @implNote This class uses a stateless conversion algorithm and is thread-safe.
+ * The conversion process maintains precision by operating on the normalized BigDecimal
+ * representation rather than floating-point arithmetic.
+ *
+ * @see ThaiBaht
+ * @see ThaiBahtConfig
  */
 final class ThaiTextConverter {
     private static final String[] DIGITS = {
@@ -38,8 +59,31 @@ final class ThaiTextConverter {
             "ห้า", "หก", "เจ็ด", "แปด", "เก้า"
     };
 
+    /**
+     * Private constructor to prevent instantiation.
+     * This is a utility class with only static methods.
+     */
     private ThaiTextConverter() {}
 
+    /**
+     * Convert a {@link BigDecimal} amount to Thai baht text.
+     * <p>
+     * This method is the core conversion entry point. It:
+     * <ol>
+     *   <li>Normalizes the input amount to 2 decimal places</li>
+     *   <li>Handles negative amounts by extracting the absolute value and using the configured prefix</li>
+     *   <li>Separates baht (integer part) and satang (fractional part)</li>
+     *   <li>Converts each part to Thai text according to configuration rules</li>
+     * </ol>
+     * </p>
+     *
+     * @param amount the monetary amount to convert, must not be {@code null}
+     * @param config the formatting configuration controlling unit words and negative prefixes, may be {@code null}
+     *               (defaults to {@link ThaiBahtConfig#defaultConfig()} if null)
+     * @return the Thai-language textual representation of the amount
+     * @throws IllegalArgumentException if {@code amount} is {@code null}
+     * @see RoundingMode#DOWN
+     */
     static String toBahtText(BigDecimal amount, ThaiBahtConfig config) {
         if (amount == null) throw new IllegalArgumentException("amount must not be null");
         if (config == null) config = ThaiBahtConfig.defaultConfig();

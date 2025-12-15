@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.zazalng</groupId>
     <artifactId>thai-baht</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <name>Thai Baht</name>
     <description>Convert BigDecimal to Thai Baht readable text</description>
     <url>https://github.com/Zazalng/ThaiBaht-Java</url>

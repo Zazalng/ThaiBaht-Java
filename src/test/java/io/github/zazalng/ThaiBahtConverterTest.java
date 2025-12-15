@@ -46,8 +46,7 @@ public class ThaiBahtConverterTest {
     @Test
     public void testMillionAndLargeNumbers() {
         assertEquals("หนึ่งล้านบาทถ้วน", ThaiBaht.of(new BigDecimal("1000000")));
-        assertEquals("หนึ่งล้านสองแสนสามหมื่นสี่พันห้าร้อยหกสิบเจ็ดบาทถ้วน",
-                ThaiBaht.of(new BigDecimal("1234567")));
+        assertEquals("หนึ่งล้านสองแสนสามหมื่นสี่พันห้าร้อยหกสิบเจ็ดบาทถ้วน", ThaiBaht.of(new BigDecimal("1234567")));
         assertEquals("สิบล้านหนึ่งบาทถ้วน", ThaiBaht.of(new BigDecimal("10000001")));
         assertEquals("หนึ่งพันหนึ่งร้อยยี่สิบเอ็ดล้านหนึ่งแสนหนึ่งหมื่นหนึ่งพันหนึ่งร้อยยี่สิบเอ็ดบาทสิบเอ็ดสตางค์", ThaiBaht.of(new BigDecimal("1121111121.11")));
     }
@@ -55,6 +54,7 @@ public class ThaiBahtConverterTest {
     @Test
     public void testNegative() {
         assertEquals("ลบหนึ่งร้อยบาทถ้วน", ThaiBaht.of(new BigDecimal("-100.00")));
+        assertEquals("ติดลบหนึ่งร้อยเอ็ดบาทยี่สิบเอ็ดสตางค์", ThaiBaht.of(new BigDecimal("-101.21"), ThaiBahtConfig.builder().setPrefix("ติดลบ").build()));
     }
 
     @Test

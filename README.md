@@ -40,7 +40,7 @@ Minimal, lightweight, and works on **Java 8+**.
 <dependency>
     <groupId>io.github.zazalng</groupId>
     <artifactId>thai-baht</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
 </dependency>
 ```
 
@@ -55,8 +55,14 @@ mvn clean install
 
 ### **One‑line API**
 ```java
-String text = BahtText.of(new BigDecimal("4520.75"));
+String text = ThaiBaht.of(new BigDecimal("4520.75"));
 // → "สี่พันห้าร้อยยี่สิบบาทเจ็ดสิบห้าสตางค์"
+```
+
+### **Instance API**
+```java
+ThaiBaht obj = ThaiBaht.create(new BigDecimal("101.01"));
+System.out.print(obj); // → "หนึ่งร้อยเอ็ดบาทหนึ่งสตางค์"
 ```
 
 ### **Using Config**
@@ -65,13 +71,13 @@ ThaiBahtConfig config = ThaiBahtConfig.builder()
         .includeUnit(true)
         .build();
 
-String text = BahtText.of(new BigDecimal("100.00"), config);
+String text = ThaiBaht.of(new BigDecimal("100.00"), config);
 // → "หนึ่งร้อยบาทถ้วน"
 ```
 
 ### **Large numbers supported**
 ```java
-BahtText.of(new BigDecimal("1250000000.50"));
+ThaiBaht.of(new BigDecimal("1250000000.50"));
 // → "หนึ่งพันสองร้อยห้าสิบล้านบาทห้าสิบสตางค์"
 ```
 
