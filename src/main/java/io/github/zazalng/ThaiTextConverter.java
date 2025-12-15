@@ -26,7 +26,7 @@ import java.math.RoundingMode;
  * normalizes amounts to 2 decimal places using {@link RoundingMode#DOWN}
  * (truncation) before converting; negative values are prefixed with
  * the Thai word for minus ("ลบ").
- * </p>
+ *
  * <p>
  * <strong>Conversion Algorithm:</strong>
  * <ul>
@@ -35,7 +35,7 @@ import java.math.RoundingMode;
  *   <li>The integer part (baht) and fractional part (satang) are converted separately to Thai text</li>
  *   <li>Special handling for "ล้าน" (million) boundaries and Thai digit naming conventions</li>
  * </ul>
- * </p>
+ *
  * <p>
  * <strong>Thai Digit Naming Rules:</strong>
  * <ul>
@@ -44,7 +44,6 @@ import java.math.RoundingMode;
  *   <li>The digit "สอง" (two) becomes "ยี่" when it appears in the tens place</li>
  *   <li>Large numbers are broken down into "ล้าน" (million) segments for readability</li>
  * </ul>
- * </p>
  *
  * @implNote This class uses a stateless conversion algorithm and is thread-safe.
  * The conversion process maintains precision by operating on the normalized BigDecimal

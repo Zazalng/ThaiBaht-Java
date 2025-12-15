@@ -21,7 +21,7 @@ package io.github.zazalng;
  * This class controls various aspects of how numeric amounts are converted to Thai text,
  * including whether unit words ("บาท", "สตางค์", "ถ้วน") are included in the output.
  * All configuration instances are immutable and thread-safe.
- * </p>
+ *
  * <p>
  * Configuration options:
  * <ul>
@@ -32,7 +32,7 @@ package io.github.zazalng;
  *       may be applied (formal vs. casual).</li>
  *   <li><strong>Negative Prefix:</strong> The Thai word to prefix negative amounts. Default is "ลบ" (minus).</li>
  * </ul>
- * </p>
+ *
  * <p>
  * Usage examples:
  * <pre>
@@ -51,7 +51,6 @@ package io.github.zazalng;
  *       .useUnit(false)
  *       .build();
  * </pre>
- * </p>
  *
  * @see ThaiBaht
  * @see Builder
@@ -98,7 +97,6 @@ public final class ThaiBahtConfig {
      *   <li>Formal wording enabled</li>
      *   <li>Negative prefix set to "ลบ" (Thai minus)</li>
      * </ul>
-     * </p>
      *
      * @return a default immutable {@link ThaiBahtConfig}
      */
@@ -111,7 +109,6 @@ public final class ThaiBahtConfig {
      * <p>
      * This method is useful for creating a modified version of an existing configuration
      * without creating a new builder from scratch.
-     * </p>
      *
      * @return a new builder initialized with this configuration's values
      */
@@ -131,7 +128,6 @@ public final class ThaiBahtConfig {
      *   <li>{@code formal} = {@code true}</li>
      *   <li>{@code negativePrefix} = "ลบ"</li>
      * </ul>
-     * </p>
      *
      * @return a new builder instance
      */
@@ -142,7 +138,7 @@ public final class ThaiBahtConfig {
      * <p>
      * This builder is not thread-safe and should not be shared across threads.
      * Each builder instance produces an immutable {@link ThaiBahtConfig} via the {@link #build()} method.
-     * </p>
+     *
      */
     public static final class Builder {
         private boolean useUnit = true;
@@ -154,7 +150,6 @@ public final class ThaiBahtConfig {
          * <p>
          * When {@code true} (default), the Thai text will include currency unit words.
          * When {@code false}, only numeric words are included.
-         * </p>
          *
          * @param v {@code true} to include unit words, {@code false} to omit them
          * @return this builder for method chaining
@@ -166,7 +161,6 @@ public final class ThaiBahtConfig {
          * <p>
          * Currently reserved for future use where different Thai wording conventions
          * may be applied.
-         * </p>
          *
          * @param v {@code true} to use formal rules, {@code false} for casual
          * @return this builder for method chaining
@@ -178,7 +172,6 @@ public final class ThaiBahtConfig {
          * <p>
          * This string will be prepended to the numeric representation for negative values.
          * The default is "ลบ" (Thai word for minus).
-         * </p>
          *
          * @param negativePrefix the new prefix to use for negative amounts, must not be {@code null}
          * @return this builder for method chaining
@@ -189,7 +182,6 @@ public final class ThaiBahtConfig {
          * Build an immutable {@link ThaiBahtConfig} instance with the configured values.
          * <p>
          * Once built, the configuration is immutable and can be safely shared across threads.
-         * </p>
          *
          * @return a new immutable {@code ThaiBahtConfig}
          */

@@ -19,12 +19,10 @@
  * This package provides a comprehensive API for converting {@link java.math.BigDecimal} monetary
  * amounts into Thai-language text describing baht (บาท) and satang (สตางค์). The conversion
  * respects Thai linguistic conventions for digit naming and currency formatting.
- * </p>
  *
  * <h2>Public API</h2>
  * <p>
  * The main entry points for users are:
- * </p>
  * <ul>
  *   <li>{@link io.github.zazalng.ThaiBaht} - Static utility methods and instance-based fluent API
  *       for converting amounts to Thai text</li>
@@ -34,7 +32,6 @@
  * <p>
  * Internal implementation classes such as {@code ThaiTextConverter} are package-private
  * and not part of the public API surface.
- * </p>
  *
  * <h2>Usage Examples</h2>
  *
@@ -79,7 +76,6 @@
  * <h2>Configuration</h2>
  * <p>
  * The {@link io.github.zazalng.ThaiBahtConfig} class provides fine-grained control over output:
- * </p>
  * <ul>
  *   <li><strong>Unit Words:</strong> When enabled, includes "บาท" (baht) and "สตางค์" (satang)
  *       or "ถ้วน" (whole) in the output</li>
@@ -91,10 +87,9 @@
  * <p>
  * All configuration objects ({@link io.github.zazalng.ThaiBahtConfig}) are immutable and thread-safe.
  * The conversion process is stateless and does not maintain any mutable state between calls.
- * </p>
  *
  * @since 1.0
- * @author Napapon Kamanee
+ * @author Zazalng
  */
 package io.github.zazalng;
 

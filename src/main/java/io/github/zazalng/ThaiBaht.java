@@ -24,7 +24,7 @@ import java.util.function.Consumer;
  * <p>
  * This class provides both static and instance-based approaches to convert a {@link BigDecimal}
  * amount to Thai-language text describing baht (บาท) and satang (สตางค์).
- * </p>
+ *
  * <p>
  * Usage examples:
  * <pre>
@@ -38,11 +38,10 @@ import java.util.function.Consumer;
  *   String text = converter.toString();
  *   // Returns: "หนึ่งร้อยบาทถ้วน"
  * </pre>
- * </p>
+ *
  * <p>
  * The class supports customizable formatting through {@link ThaiBahtConfig},
  * including control over unit word inclusion and negative number prefixes.
- * </p>
  *
  * @see ThaiBahtConfig
  * @since 1.0
@@ -67,7 +66,6 @@ public final class ThaiBaht {
      * Create a ThaiBaht converter with the specified amount using the default configuration.
      * <p>
      * The default configuration includes unit words ("บาท", "สตางค์") and uses formal wording.
-     * </p>
      *
      * @param amount the monetary amount to convert (baht and satang), must not be {@code null}
      * @return a new ThaiBaht instance
@@ -81,7 +79,6 @@ public final class ThaiBaht {
      * Create a ThaiBaht converter with the specified amount and custom configuration.
      * <p>
      * This allows you to control whether unit words are included and other formatting options.
-     * </p>
      *
      * @param amount the monetary amount to convert (baht and satang), must not be {@code null}
      * @param config the formatting configuration, must not be {@code null}
@@ -96,7 +93,6 @@ public final class ThaiBaht {
      * Update the amount to be converted.
      * <p>
      * This method supports a fluent builder-style interface.
-     * </p>
      *
      * @param amount the new monetary amount, must not be {@code null}
      * @return this ThaiBaht instance for method chaining
@@ -119,7 +115,6 @@ public final class ThaiBaht {
      * Update the formatting configuration.
      * <p>
      * This method supports a fluent builder-style interface.
-     * </p>
      *
      * @param config the new formatting configuration, must not be {@code null}
      * @return this ThaiBaht instance for method chaining
@@ -135,7 +130,6 @@ public final class ThaiBaht {
      * <p>
      * This method allows convenient inline configuration updates without having
      * to call {@link ThaiBahtConfig#toBuilder()} and {@link ThaiBahtConfig.Builder#build()} explicitly.
-     * </p>
      *
      * @param updater a consumer function that modifies the configuration builder
      * @return this ThaiBaht instance for method chaining
@@ -154,7 +148,6 @@ public final class ThaiBaht {
      * <p>
      * This method is called when the instance is converted to a string
      * (e.g., in string concatenation or explicit toString() calls).
-     * </p>
      *
      * @return the Thai-language textual representation of the amount
      */
@@ -168,11 +161,10 @@ public final class ThaiBaht {
      * <p>
      * This is a convenience static method that uses the {@link ThaiBahtConfig#defaultConfig() default configuration},
      * which includes unit words ("บาท", "สตางค์") and formal wording rules.
-     * </p>
+     *
      * <p>
      * The amount is normalized to 2 decimal places (satang precision). Negative values are prefixed
      * with the Thai word for minus ("ลบ").
-     * </p>
      *
      * @param amount the monetary amount to convert (baht and satang), must not be {@code null}
      * @return the Thai-language textual representation of the amount
@@ -195,7 +187,7 @@ public final class ThaiBaht {
      *   <li>Customize the negative number prefix via {@link ThaiBahtConfig.Builder#setPrefix(String)}</li>
      *   <li>Use formal wording rules via {@link ThaiBahtConfig.Builder#formal(boolean)}</li>
      * </ul>
-     * </p>
+     *
      * <p>
      * Usage example:
      * <pre>
@@ -207,7 +199,6 @@ public final class ThaiBaht {
      *   String text = ThaiBaht.of(new BigDecimal("500.25"), config);
      *   // Returns: "ห้าร้อยบาทยี่สิบห้าสตางค์"
      * </pre>
-     * </p>
      *
      * @param amount the monetary amount to convert (baht and satang), must not be {@code null}
      * @param config formatting configuration to control inclusion of unit words and other options, must not be {@code null}
