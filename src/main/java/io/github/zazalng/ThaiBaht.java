@@ -15,36 +15,43 @@
  */
 package io.github.zazalng;
 
+import io.github.zazalng.contracts.Language;
+import io.github.zazalng.handler.TextConverter;
+
 import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
- * Utility entry point for converting numeric amounts into Thai baht text.
+ * Utility entry point for converting numeric amounts into baht text with multi-language support.
  * <p>
  * This class provides both static and instance-based approaches to convert a {@link BigDecimal}
- * amount to Thai-language text describing baht (บาท) and satang (สตางค์).
+ * amount to language-specific text describing baht (บาท) and satang (สตางค์) in Thai,
+ * or their English equivalents.
  *
  * <p>
  * Usage examples:
  * <pre>
- *   // Static usage
- *   String text = ThaiBaht.of(new BigDecimal("1234.56"));
+ *   // Thai (default - unchanged from 1.2.0)
+ *   String thai = ThaiBaht.of(new BigDecimal("1234.56"));
  *   // Returns: "หนึ่งพันสองร้อยสามสิบสี่บาทห้าสิบหกสตางค์"
  *
- *   // Instance-based with builder pattern
- *   ThaiBaht converter = ThaiBaht.create(new BigDecimal("100.00"))
- *       .config(b -> b.useUnit(true));
- *   String text = converter.toString();
- *   // Returns: "หนึ่งร้อยบาทถ้วน"
+ *   // English (new in 1.3.0)
+ *   String english = ThaiBaht.of(new BigDecimal("1234.56"),
+ *       ThaiBahtConfig.builder()
+ *           .language(Language.ENGLISH)
+ *           .build());
+ *   // Returns: "One Thousand Two Hundred Thirty-Four Baht Fifty-Six Satang"
  * </pre>
  *
  * <p>
  * The class supports customizable formatting through {@link ThaiBahtConfig},
- * including control over unit word inclusion and negative number prefixes.
+ * including control over output language, unit word inclusion, and negative number prefixes.
  *
  * @see ThaiBahtConfig
+ * @see Language
  * @since 1.0
+ * @version 1.3.0
  */
 public final class ThaiBaht {
     private ThaiBahtConfig config;
@@ -112,6 +119,14 @@ public final class ThaiBaht {
     }
 
     /**
+     * Get the current {@code config} as {@code ThaiBahtConfig}
+     * @return its {@code config} object
+     */
+    public ThaiBahtConfig getConfig(){
+        return config;
+    }
+
+    /**
      * Update the formatting configuration.
      * <p>
      * This method supports a fluent builder-style interface.
@@ -135,6 +150,7 @@ public final class ThaiBaht {
      * @return this ThaiBaht instance for method chaining
      * @throws NullPointerException if {@code updater} is {@code null}
      * @see ThaiBahtConfig.Builder
+     * @since 1.0
      */
     public ThaiBaht config(Consumer<ThaiBahtConfig.Builder> updater) {
         ThaiBahtConfig.Builder builder = this.config.toBuilder();
@@ -149,11 +165,11 @@ public final class ThaiBaht {
      * This method is called when the instance is converted to a string
      * (e.g., in string concatenation or explicit toString() calls).
      *
-     * @return the Thai-language textual representation of the amount
+     * @return the Thai textual representation of the amount
      */
     @Override
     public String toString() {
-        return ThaiTextConverter.toBahtText(amount, config);
+        return TextConverter.toBahtText(this);
     }
 
     /**
@@ -168,7 +184,7 @@ public final class ThaiBaht {
      *
      * @param amount the monetary amount to convert (baht and satang), must not be {@code null}
      * @return the Thai-language textual representation of the amount
-     *         (for example: "หนึ่งร้อยบาทถ้วน" for 100.00, or "ลบหนึ่งบาท" for -1.00)
+     *         (for example: "หนึ่งร้อยบาทถ้วน" for 100.00, or "ลบหนึ่งบาทถ้วน" for -1.00)
      * @throws NullPointerException if {@code amount} is {@code null}
      * @see #of(BigDecimal, ThaiBahtConfig)
      * @see ThaiBahtConfig#defaultConfig()
@@ -183,6 +199,7 @@ public final class ThaiBaht {
      * This method offers fine-grained control over output formatting by allowing
      * a custom {@link ThaiBahtConfig} to be specified. You can use this to:
      * <ul>
+     *   <li>Language setting via {@link ThaiBahtConfig.Builder#language(Language)}</li>
      *   <li>Control whether unit words are included via {@link ThaiBahtConfig.Builder#useUnit(boolean)}</li>
      *   <li>Customize the negative number prefix via {@link ThaiBahtConfig.Builder#setPrefix(String)}</li>
      *   <li>Use formal wording rules via {@link ThaiBahtConfig.Builder#formal(boolean)}</li>
@@ -192,25 +209,27 @@ public final class ThaiBaht {
      * Usage example:
      * <pre>
      *   ThaiBahtConfig config = ThaiBahtConfig.builder()
+     *       .language(Language.ENGLISH)
      *       .useUnit(true)
      *       .formal(true)
      *       .setPrefix("ลบ")
      *       .build();
      *   String text = ThaiBaht.of(new BigDecimal("500.25"), config);
-     *   // Returns: "ห้าร้อยบาทยี่สิบห้าสตางค์"
+     *   // Returns: "Five Hundred Baht Twenty-Five Satang"
      * </pre>
      *
      * @param amount the monetary amount to convert (baht and satang), must not be {@code null}
      * @param config formatting configuration to control inclusion of unit words and other options, must not be {@code null}
-     * @return the Thai-language textual representation of the amount
+     * @return the Thai textual representation of the amount
      * @throws NullPointerException if {@code amount} or {@code config} is {@code null}
      * @see #of(BigDecimal)
      * @see ThaiBahtConfig
      * @see ThaiBahtConfig.Builder
+     * @see Language
      */
     public static String of(BigDecimal amount, ThaiBahtConfig config) {
         Objects.requireNonNull(amount, "amount must not be null");
         Objects.requireNonNull(config, "config must not be null");
-        return ThaiTextConverter.toBahtText(amount, config);
+        return TextConverter.toBahtText(new ThaiBaht(amount, config));
     }
 }
