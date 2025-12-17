@@ -16,13 +16,17 @@ This library is designed for **enterprise systems**, **payment processors**, **e
   *“เอ็ด”, “ยี่”, silent “หนึ่ง” in tens, repeated “ล้าน” groups, etc.*
 - Matches official government invoice conventions.
 
+### ✔ Supported Multiple-language
+- Code on clean structural with ease of new implement logic.
+- Fully focus convert logic of language.
+
 ### ✔ Correct Satang Handling
 - Outputs `ถ้วน` when satang = 0
 - Reads satang normally when decimals exist
 
 ### ✔ Negative number support
-- Adds prefix `ลบ` for negative values
-- Enhance custom prefix for negative values though config object
+- Custom prefix for negative values though config object
+- Default prefix fixed by handler class
 
 ### ✔ Configurable output
 - Include/omit currency unit (`บาท`, `สตางค์`)
@@ -40,7 +44,7 @@ Minimal, lightweight, and works on **Java 8+**.
 <dependency>
     <groupId>io.github.zazalng</groupId>
     <artifactId>thai-baht</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
 </dependency>
 ```
 
@@ -62,7 +66,8 @@ String text = ThaiBaht.of(new BigDecimal("4520.75"));
 ### **Instance API**
 ```java
 ThaiBaht obj = ThaiBaht.create(new BigDecimal("101.01"));
-System.out.print(obj); // → "หนึ่งร้อยเอ็ดบาทหนึ่งสตางค์"
+System.out.print(obj);
+// → "หนึ่งร้อยเอ็ดบาทหนึ่งสตางค์"
 ```
 
 ### **Using Config**
@@ -79,6 +84,17 @@ String text = ThaiBaht.of(new BigDecimal("100.00"), config);
 ```java
 ThaiBaht.of(new BigDecimal("1250000000.50"));
 // → "หนึ่งพันสองร้อยห้าสิบล้านบาทห้าสิบสตางค์"
+```
+
+### **English language supported**
+
+```java
+ThaiBahtConfig config = ThaiBahtConfig.builder(Language.ENGLISH)
+        .includeUnit(true)
+        .build();
+
+String text = ThaiBaht.of(new BigDecimal("525.50"), config);
+// → "Five Hundred Twenty-Five Baht Fifty Satang"
 ```
 
 ---
@@ -101,13 +117,22 @@ mvn test
 ```
 src/
  └── main/java/io/github/zazalng/
+       ├── contracts
+            └── Language.java
+       ├── handler
+            ├── EnglishConvertHandler.java
+            ├── TextConverter.java
+            └── ThaiConvertHandler.java
        ├── ThaiBaht.java
        ├── ThaiTextConverter.java
        └── ThaiBahtConfig.java
 
 src/
  └── test/java/io/github/zazalng/
+       ├── EnglishLanguageTest.java
+       ├── PrefixAutoUpdateTest.java
        └── ThaiBahtConverterTest.java
+       
 ```
 
 ---
@@ -119,7 +144,7 @@ Apache License 2.0 — free for personal and commercial use.
 
 ## ❤️ Contributing
 Pull requests are welcome!  
-Add features, expand dialect support, improve formatting, or enhance unit tests.
+Add features / language behavior, expand dialect support, improve formatting, or enhance unit tests.
 
 ---
 
