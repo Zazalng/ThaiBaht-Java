@@ -124,7 +124,6 @@ src/
             ├── TextConverter.java
             └── ThaiConvertHandler.java
        ├── ThaiBaht.java
-       ├── ThaiTextConverter.java
        └── ThaiBahtConfig.java
 
 src/
