@@ -17,7 +17,7 @@ import java.math.RoundingMode;
  * @see ThaiBaht
  * @see ThaiBahtConfig
  */
-public final class EnglishConvertHandler {
+final class EnglishConvertHandler {
     /**
      * Default negative prefix for English
      */
