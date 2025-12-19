@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.zazalng;
+package io.github.zazalng.v1;
 
+import io.github.zazalng.ThaiBaht;
+import io.github.zazalng.ThaiBahtConfig;
 import io.github.zazalng.contracts.Language;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +24,10 @@ import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class EnglishLanguageTest {
+/**
+ * Test Implement for English update
+ */
+public class v1_2_0Test {
 
     @Test
     public void testEnglishZero() {

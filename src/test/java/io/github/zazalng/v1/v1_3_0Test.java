@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.zazalng;
+package io.github.zazalng.v1;
 
+import io.github.zazalng.ThaiBaht;
+import io.github.zazalng.ThaiBahtConfig;
 import io.github.zazalng.contracts.Language;
 import org.junit.jupiter.api.Test;
 
@@ -23,17 +25,9 @@ import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Test suite for version 1.3.0 prefix auto-update feature.
- * <p>
- * Tests verify that:
- * 1. When changing language, prefix automatically updates to language default
- * 2. Explicitly set prefixes are preserved across language changes
- * 3. Backward compatibility is maintained
- * 4. toBuilder() behavior is correct
- *
- * @since 1.3.0
+ * Test implement for update Negative Prefix and multi-language proposal
  */
-public class PrefixAutoUpdateTest {
+public class v1_3_0Test {
 
     @Test
     public void testBackwardCompatibility_ParamlessBuilder() {

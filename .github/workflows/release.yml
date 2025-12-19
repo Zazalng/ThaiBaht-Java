@@ -1,4 +1,4 @@
-name: Publish Maven Package
+name: Publish Maven & Gradle Packages
 
 on:
   workflow_dispatch:
@@ -28,40 +28,67 @@ jobs:
           java-version: 17
           cache: maven
 
-      - name: Configure Maven servers (GitHub Packages)
+      # --- MAVEN SECTION ---
+      - name: Configure Maven settings
         uses: s4u/maven-settings-action@v4.0.0
         with:
           servers: |
-            [
-              {
-                "id": "github",
-                "username": "${{ github.actor }}",
-                "password": "${{ secrets.GITHUB_TOKEN }}"
-              }
-            ]
+            [{ "id": "github", "username": "${{ github.actor }}", "password": "${{ secrets.GITHUB_TOKEN }}" }]
 
-      - name: Build and run tests
-        run: mvn -B clean verify -Pgithub
-
-      - name: Deploy to GitHub Packages
+      - name: Maven Build and Deploy
         run: mvn -B deploy -Pgithub
 
+      # --- GRADLE MAGIC SECTION ---
+      - name: Convert Maven to Gradle
+        run: gradle init --type pom --dsl groovy --interactive false
+
+      - name: Inject Gradle Publishing Logic
+        run: |
+          cat <<EOF >> build.gradle
+          // Add publishing capabilities to the converted project
+          apply plugin: 'maven-publish'
+          publishing {
+              publications {
+                  maven(MavenPublication) {
+                      from components.java
+                  }
+              }
+              repositories {
+                  maven {
+                      name = "GitHubPackages"
+                      url = uri("https://maven.pkg.github.com/\${System.getenv('GITHUB_REPOSITORY')}")
+                      credentials {
+                          username = System.getenv("GITHUB_ACTOR")
+                          password = System.getenv("GITHUB_TOKEN")
+                      }
+                  }
+              }
+          }
+          EOF
+
+      - name: Gradle Publish
+        run: ./gradlew publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+
+      # --- RELEASE SECTION ---
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          name: "Release ${{ github.ref_name }}"
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload JARs Individually
+      - name: Upload JARs to Release
         run: |
-          for file in target/*.jar; do
+          # This catches both Maven (target/) and Gradle (build/libs/) JARs
+          find . -name "*.jar" -not -path "*/.*" | while read file; do
             echo "Uploading $file"
-            gh release upload "${{ github.ref_name }}" "$file"
+            gh release upload "${{ github.ref_name }}" "$file" --clobber
           done
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

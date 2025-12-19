@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.zazalng;
+package io.github.zazalng.v1;
 
+import io.github.zazalng.ThaiBaht;
+import io.github.zazalng.ThaiBahtConfig;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ThaiBahtConverterTest {
+/**
+ * Inital Release for v1.0.0
+ */
+public class v1_0_0Test {
     @Test
     public void testZero() {
-        assertEquals("ศูนย์บาทถ้วน", ThaiBaht.of(new BigDecimal("0")));
+        Assertions.assertEquals("ศูนย์บาทถ้วน", ThaiBaht.of(new BigDecimal("0")));
         assertEquals("ศูนย์บาทห้าสตางค์", ThaiBaht.of(new BigDecimal("0.05")));
     }
 

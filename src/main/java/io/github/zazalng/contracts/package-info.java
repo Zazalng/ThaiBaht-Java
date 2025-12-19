@@ -50,7 +50,6 @@
  *     <td>"Minus"</td>
  *     <td>"Minus one hundred baht exact"</td>
  *   </tr>
- * </table>
  *
  * <h2>Version 1.3.0 Features</h2>
  * <ul>
