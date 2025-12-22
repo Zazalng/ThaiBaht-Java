@@ -1,19 +1,34 @@
+/*
+ * Copyright 2025 Napapon Kamanee
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.zazalng.handler;
 
 import io.github.zazalng.ThaiBaht;
 import io.github.zazalng.ThaiBahtConfig;
-import io.github.zazalng.contracts.Language;
+import io.github.zazalng.contracts.LanguageHandler;
 import io.github.zazalng.utils.FormatTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 /**
- * Internal English language converter for converting numeric amounts to English Baht text.
+ * English language implementation of {@link LanguageHandler}.
  * <p>
- * This package-private handler implements the specialized logic for converting
- * {@link BigDecimal} amounts to their English textual representation. It is not intended
- * for direct use; instead, access through the public {@link ThaiBaht} API.
+ * This handler converts numeric amounts to English textual representation using standard
+ * English conventions. It implements the complete conversion logic previously found in
+ * {@code EnglishConvertHandler}.
  *
  * <h2>English Number Formatting Rules</h2>
  * <p>
@@ -22,105 +37,32 @@ import java.math.RoundingMode;
  *   <li><strong>Hyphens for compound numbers:</strong> Twenty-Five, Ninety-Nine, etc.</li>
  *   <li><strong>Position words:</strong> Hundred, Thousand, Million</li>
  *   <li><strong>Capitalization:</strong> Each word starts with capital letter</li>
- *   <li><strong>Spacing:</strong> Position words separated by spaces (e.g., "One Million Twenty Thousand")</li>
+ *   <li><strong>Spacing:</strong> Position words separated by spaces</li>
  *   <li><strong>Zero handling:</strong> Single 0 = "Zero", portions of 0 = omitted</li>
  * </ul>
  *
- * <h2>Conversion Process</h2>
- * <p>
- * The conversion follows these high-level steps:
- * <ol>
- *   <li>Normalize amount to 2 decimal places using {@link java.math.RoundingMode#DOWN}</li>
- *   <li>Extract absolute value to handle magnitude separately</li>
- *   <li>Split into integer (baht) and fractional (satang) parts</li>
- *   <li>Convert each part using specialized English digit conversion methods</li>
- *   <li>Apply configuration options (unit words, custom format, spaces)</li>
- *   <li>Handle negative prefix if amount is negative</li>
- * </ol>
- *
- * <h2>Number Conversion Methods</h2>
- * <p>
- * The converter uses specialized methods for different numeric ranges:
+ * <h2>Unit Words</h2>
  * <ul>
- *   <li><strong>convertEnglishInteger():</strong> Handles full integers including millions.
- *       Recursively processes millions and remainder.</li>
- *   <li><strong>convertEnglishUnderMillion():</strong> Handles 1-999,999 by separating thousands.
- *       Recursively calls under-thousand converter.</li>
- *   <li><strong>convertEnglishUnderThousand():</strong> Handles 1-999 by separating hundreds
- *       and remainder (using under-hundred logic).</li>
- *   <li><strong>convertEnglishTwoDigits():</strong> Handles 1-99 for satang conversion using
- *       proper hyphenation for compound numbers.</li>
+ *   <li>"Baht" - Currency unit</li>
+ *   <li>"Satang" - Fractional unit</li>
+ *   <li>"Only" - Exact indicator (used when satang is zero)</li>
  * </ul>
  *
- * <h2>Satang Handling</h2>
- * <p>
- * Satang (fractional part) is handled as follows:
- * <ul>
- *   <li>When satang = 0: Output "Only" (or "Exact") if units are enabled</li>
- *   <li>When satang > 0: Convert using specialized two-digit converter and append "Satang"</li>
- *   <li>Example: 100.50 → "One Hundred Baht Fifty Satang"</li>
- *   <li>Uses {@link java.math.RoundingMode#DOWN} for truncation (100.999 → 100.99)</li>
- * </ul>
- *
- * <h2>Configuration Support</h2>
- * <p>
- * This handler respects all {@link ThaiBahtConfig} options:
- * <ul>
- *   <li>Unit words inclusion (Baht, Satang, Only)</li>
- *   <li>Custom format templates via {@link FormatApplier}</li>
- *   <li>Negative prefix configuration (defaults to "Minus" for English)</li>
- *   <li>Formal wording mode (reserved for future use)</li>
- * </ul>
- *
- * <h2>Number Examples</h2>
- * <p>
- * <strong>English number formatting:</strong>
+ * <h2>Examples</h2>
  * <pre>{@code
- * Integer examples:
- * 0      → "Zero"
- * 5      → "Five"
- * 15     → "Fifteen"
- * 25     → "Twenty-Five"
- * 100    → "One Hundred"
- * 101    → "One Hundred One"
- * 1000   → "One Thousand"
- * 1234   → "One Thousand Two Hundred Thirty-Four"
- * 1000000 → "One Million"
- * 1234567 → "One Million Two Hundred Thirty-Four Thousand Five Hundred Sixty-Seven"
+ * handler.convert(ThaiBaht.of(new BigDecimal("100.00"), config));
+ * // Output: "One Hundred Baht Only"
+ *
+ * handler.convert(ThaiBaht.of(new BigDecimal("1234.56"), config));
+ * // Output: "One Thousand Two Hundred Thirty-Four Baht Fifty-Six Satang"
  * }</pre>
  *
- * <h2>Currency Examples</h2>
- * <p>
- * <strong>Currency conversion examples:</strong>
- * <pre>{@code
- * // With units enabled (default)
- * "100.00"  → "One Hundred Baht Only"
- * "100.01"  → "One Hundred Baht One Satang"
- * "1234.56" → "One Thousand Two Hundred Thirty-Four Baht Fifty-Six Satang"
- *
- * // Without units
- * "100.00"  → "One Hundred"
- * "1000.50" → "One Thousand Fifty"
- *
- * // Negative amounts
- * "-100.00" → "Minus One Hundred Baht Only"
- * }</pre>
- *
- * @implNote This class is package-private and stateless. It uses static methods only.
- *           The conversion algorithm maintains no mutable state and is thread-safe.
- * @see ThaiBaht
- * @see ThaiBahtConfig
- * @see TextConverter
- * @see FormatApplier
+ * @see LanguageHandler
+ * @see EnglishConvertHandler
  * @author Zazalng
- * @since 1.3.0
- * @version 1.4.0
+ * @since 2.0.0
  */
-@Deprecated
-public final class EnglishConvertHandler {
-    /**
-     * Default negative prefix for English
-     */
+public class EnglishLanguageHandler implements LanguageHandler {
     private static final String[] ENGLISH_DIGITS = {
             "Zero", "One", "Two", "Three", "Four",
             "Five", "Six", "Seven", "Eight", "Nine"
@@ -136,17 +78,45 @@ public final class EnglishConvertHandler {
             "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
     };
 
-    /**
-     * Private constructor to prevent instantiation.
-     * This is a utility class with only static methods.
-     */
-    private EnglishConvertHandler() {}
-
-    static String convert(ThaiBaht baht){
+    @Override
+    public String convert(ThaiBaht baht) {
+        if (baht == null || baht.getAmount() == null) {
+            throw new IllegalArgumentException("baht and amount must not be null");
+        }
         return convertToEnglish(baht.getAmount(), baht.getConfig());
     }
 
-    private static String convertToEnglish(BigDecimal amount, ThaiBahtConfig config) {
+    @Override
+    public String getLanguageCode() {
+        return "en";
+    }
+
+    @Override
+    public String getLanguageName() {
+        return "English";
+    }
+
+    @Override
+    public String getUnitWord() {
+        return "Baht";
+    }
+
+    @Override
+    public String getExactWord() {
+        return "Only";
+    }
+
+    @Override
+    public String getSatangWord() {
+        return "Satang";
+    }
+
+    @Override
+    public String getNegativePrefix() {
+        return "Minus";
+    }
+
+    private String convertToEnglish(BigDecimal amount, ThaiBahtConfig config) {
         // normalize to 2 decimal places (satang) - truncate toward floor
         BigDecimal normalized = amount.setScale(2, RoundingMode.DOWN);
 
@@ -154,7 +124,6 @@ public final class EnglishConvertHandler {
 
         long baht = abs.longValue();
         int satang = abs.subtract(new BigDecimal(baht)).movePointRight(2).intValue();
-        Language lang = config.getLanguage();
 
         // Generate text for baht part
         String bahtText;
@@ -179,31 +148,31 @@ public final class EnglishConvertHandler {
         String result;
         if (template != null) {
             // Apply custom format with negative prefix and satang value
-            String negPrefix = config.getNegativePrefix().isEmpty() ? lang.getPrefix() : config.getNegativePrefix();
-            result = FormatApplier.apply(template, bahtText, satangText, satang, lang, negPrefix, ENGLISH_DIGITS[0]);
+            String negPrefix = config.getNegativePrefix().isEmpty() ? getNegativePrefix() : config.getNegativePrefix();
+            result = FormatApplier.apply(template, bahtText, satangText, satang, this, negPrefix, ENGLISH_DIGITS[0]);
         } else {
             // Use standard formatting
             StringBuilder sb = new StringBuilder();
 
             if (config.isUseUnit()) {
-                sb.append(bahtText).append(" ").append(lang.getUnit());
+                sb.append(bahtText).append(" ").append(getUnitWord());
             } else {
                 sb.append(bahtText);
             }
 
             if (satang == 0) {
-                if (config.isUseUnit()) sb.append(" ").append(lang.getExact());
+                if (config.isUseUnit()) sb.append(" ").append(getExactWord());
             } else {
                 sb.append(" ");
                 sb.append(satangText);
-                if (config.isUseUnit()) sb.append(" ").append(lang.getSatang());
+                if (config.isUseUnit()) sb.append(" ").append(getSatangWord());
             }
 
             result = sb.toString();
 
             // Apply negative prefix only if no custom format is used
             if (isNegative) {
-                return (config.getNegativePrefix().isEmpty() ? lang.getPrefix() : config.getNegativePrefix()) + " " + result;
+                return (config.getNegativePrefix().isEmpty() ? getNegativePrefix() : config.getNegativePrefix()) + " " + result;
             }
         }
 
@@ -211,7 +180,7 @@ public final class EnglishConvertHandler {
     }
 
     // convert English full integer (handles millions)
-    private static String convertEnglishInteger(long number) {
+    private String convertEnglishInteger(long number) {
         if (number == 0) return ENGLISH_DIGITS[0];
 
         StringBuilder sb = new StringBuilder();
@@ -231,7 +200,7 @@ public final class EnglishConvertHandler {
     }
 
     // convert English numbers from 1..999_999
-    private static String convertEnglishUnderMillion(long number) {
+    private String convertEnglishUnderMillion(long number) {
         if (number == 0) return "";
 
         StringBuilder sb = new StringBuilder();
@@ -255,7 +224,7 @@ public final class EnglishConvertHandler {
     }
 
     // convert English numbers from 1..999
-    private static String convertEnglishUnderThousand(long number) {
+    private String convertEnglishUnderThousand(long number) {
         if (number == 0) return "";
 
         StringBuilder sb = new StringBuilder();
@@ -288,7 +257,7 @@ public final class EnglishConvertHandler {
     }
 
     // convert English 1..99 for satang
-    private static String convertEnglishTwoDigits(int n) {
+    private String convertEnglishTwoDigits(int n) {
         if (n < 0 || n > 99) throw new IllegalArgumentException("n must be between 0 and 99");
         if (n == 0) return ENGLISH_DIGITS[0];
         if (n < 10) return ENGLISH_DIGITS[n];
@@ -307,3 +276,4 @@ public final class EnglishConvertHandler {
         }
     }
 }
+

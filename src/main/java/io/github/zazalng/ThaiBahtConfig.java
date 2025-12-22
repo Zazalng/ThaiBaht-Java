@@ -16,6 +16,7 @@
 package io.github.zazalng;
 
 import io.github.zazalng.contracts.Language;
+import io.github.zazalng.contracts.LanguageHandler;
 import io.github.zazalng.utils.FormatTemplate;
 
 /**
@@ -118,16 +119,18 @@ import io.github.zazalng.utils.FormatTemplate;
  * @version 1.4.0
  */
 public final class ThaiBahtConfig {
-    private final Language language; // output language (THAI or ENGLISH)
+    private final Language language; // output language (THAI or ENGLISH) - kept for backward compatibility
+    private final io.github.zazalng.contracts.LanguageHandler languageHandler; // language handler implementation (2.0.0+)
     private final boolean useUnit; // include unit words
     private final boolean formal; // placeholder for formal vs casual rules (future)
     private final String negativePrefix; // prefix for negative config
     private final FormatTemplate formatTemplate; // custom format for positive amounts (1.4.0+)
     private final FormatTemplate negativeFormatTemplate; // custom format for negative amounts (1.4.0+)
 
-    private ThaiBahtConfig(Language language, boolean useUnit, boolean formal, String negativePrefix,
-                           FormatTemplate formatTemplate, FormatTemplate negativeFormatTemplate) {
+    private ThaiBahtConfig(Language language, io.github.zazalng.contracts.LanguageHandler languageHandler, boolean useUnit, boolean formal,
+                           String negativePrefix, FormatTemplate formatTemplate, FormatTemplate negativeFormatTemplate) {
         this.language = language;
+        this.languageHandler = languageHandler;
         this.useUnit = useUnit;
         this.formal = formal;
         this.negativePrefix = negativePrefix == null ? "":negativePrefix;
@@ -143,6 +146,17 @@ public final class ThaiBahtConfig {
      * @return the configured language (THAI or ENGLISH), never {@code null}
      */
     public Language getLanguage() { return language; }
+
+    /**
+     * Returns the language handler implementation for this configuration.
+     * <p>
+     * This handler is responsible for the actual conversion of amounts to text. It contains
+     * the language-specific conversion logic and unit words.
+     *
+     * @return the LanguageHandler implementation, never {@code null}
+     * @since 2.0.0
+     */
+    public io.github.zazalng.contracts.LanguageHandler getLanguageHandler() { return languageHandler; }
 
     /**
      * Returns whether unit words are included in the output.
@@ -217,7 +231,7 @@ public final class ThaiBahtConfig {
      * @see #builder(Language)
      */
     public static ThaiBahtConfig defaultConfig() {
-        return new ThaiBahtConfig(Language.THAI, true, true, null, null, null);
+        return new ThaiBahtConfig(Language.THAI, new io.github.zazalng.handler.ThaiLanguageHandler(), true, true, null, null, null);
     }
 
     /**
@@ -282,7 +296,7 @@ public final class ThaiBahtConfig {
      * <p>
      * The returned builder starts with Thai language defaults:
      * <ul>
-     *   <li>Language: THAI</li>
+     *   <li>Language Handler: ThaiLanguageHandler</li>
      *   <li>Unit Words: {@code true}</li>
      *   <li>Formal Mode: {@code true}</li>
      *   <li>Negative Prefix: Empty string (uses Thai default "ลบ")</li>
@@ -293,43 +307,72 @@ public final class ThaiBahtConfig {
      * <strong>Example - English with no units:</strong>
      * <pre>{@code
      * ThaiBahtConfig config = ThaiBahtConfig.builder()
-     *     .language(Language.ENGLISH)
+     *     .languageHandler(new EnglishLanguageHandler())
      *     .useUnit(false)
      *     .build();
      * }</pre>
      *
-     * @return a new builder instance with Thai language as default
-     * @since 1.0
+     * @return a new builder instance with Thai language handler as default
+     * @since 2.0.0
+     * @see #builder(LanguageHandler)
      * @see #builder(Language)
      */
     public static Builder builder() {
-        return new Builder(Language.THAI);
+        return new Builder(new io.github.zazalng.handler.ThaiLanguageHandler());
     }
 
     /**
-     * Creates a new {@link Builder} with a specific initial language.
+     * Creates a new {@link Builder} with a specific initial language handler.
      * <p>
-     * This factory method is useful when you want to build a configuration for a specific language
-     * without having to separately call {@link Builder#language(Language)}. The builder is initialized
-     * with the language-appropriate defaults including the language's default negative prefix.
+     * This factory method is useful when you want to build a configuration with a specific language handler.
+     *
+     * <p>
+     * <strong>Example - create custom language configuration:</strong>
+     * <pre>{@code
+     * ThaiBahtConfig config = ThaiBahtConfig.builder(new EnglishLanguageHandler())
+     *     .useUnit(true)
+     *     .formal(true)
+     *     .build();
+     * }</pre>
+     *
+     * @param handler the language handler for the configuration, must not be {@code null}
+     * @return a new builder instance initialized with the specified handler
+     * @since 2.0.0
+     * @see #builder()
+     * @see #builder(Language)
+     */
+    public static Builder builder(io.github.zazalng.contracts.LanguageHandler handler) {
+        return new Builder(handler);
+    }
+
+    /**
+     * Creates a new {@link Builder} with a specific initial language (backward compatibility).
+     * <p>
+     * This factory method provides backward compatibility with v1.x code by accepting a Language enum.
+     * Internally, it creates the appropriate handler for the language.
      *
      * <p>
      * <strong>Example - create English configuration:</strong>
      * <pre>{@code
-     * ThaiBahtConfig englishConfig = ThaiBahtConfig.builder(Language.ENGLISH)
+     * ThaiBahtConfig config = ThaiBahtConfig.builder(Language.ENGLISH)
      *     .useUnit(true)
      *     .formal(true)
      *     .build();
-     * // Prefix defaults to "Minus" (English default)
      * }</pre>
      *
      * @param language the initial language for the configuration, must not be {@code null}
-     * @return a new builder instance initialized with the specified language
-     * @since 2.0
+     * @return a new builder instance initialized with the appropriate handler for the language
+     * @since 2.0.0
+     * @deprecated Use {@link #builder(LanguageHandler)} for new code
      * @see #builder()
+     * @see #builder(LanguageHandler)
      */
+    @Deprecated
     public static Builder builder(Language language) {
-        return new Builder(language);
+        io.github.zazalng.contracts.LanguageHandler handler = language == Language.ENGLISH
+            ? new io.github.zazalng.handler.EnglishLanguageHandler()
+            : new io.github.zazalng.handler.ThaiLanguageHandler();
+        return new Builder(handler);
     }
 
     /**
@@ -394,7 +437,8 @@ public final class ThaiBahtConfig {
      * @since 1.0
      */
     public static final class Builder {
-        private Language language;
+        private Language language; // kept for backward compatibility
+        private io.github.zazalng.contracts.LanguageHandler languageHandler; // the actual handler
         private boolean useUnit = true;
         private boolean formal = true;
         private String negativePrefix = "";
@@ -402,40 +446,96 @@ public final class ThaiBahtConfig {
         private FormatTemplate negativeFormatTemplate = null;
 
         /**
-         * Constructs a builder with a specific initial language.
+         * Constructs a builder with a specific initial language handler.
          * <p>
-         * This constructor sets up the builder with the given language and initializes
+         * This constructor sets up the builder with the given language handler and initializes
          * other settings to their defaults. The negative prefix starts as empty string
-         * and will default to the language's standard prefix unless explicitly set.
+         * and will default to the handler's standard prefix unless explicitly set.
          *
-         * @param language the initial language, must not be {@code null}
+         * @param handler the language handler, must not be {@code null}
+         * @since 2.0.0
          */
-        public Builder(Language language){
-            this.language = language;
+        public Builder(io.github.zazalng.contracts.LanguageHandler handler){
+            this.languageHandler = handler;
+            // Set language enum based on handler for backward compatibility
+            if (handler instanceof io.github.zazalng.handler.EnglishLanguageHandler) {
+                this.language = Language.ENGLISH;
+            } else {
+                this.language = Language.THAI;
+            }
         }
 
         /**
-         * Sets the output language for text conversion.
+         * Constructs a builder with a specific initial language (backward compatibility).
          * <p>
-         * This method controls which language handler is used and affects unit words and default prefixes.
-         * If the negative prefix has not been explicitly set (via {@link #setPrefix(String)}), it will
-         * automatically update to the new language's default. If you have explicitly set a custom prefix,
-         * it will be preserved.
+         * This constructor creates the appropriate handler for the language and initializes
+         * other settings to their defaults.
+         *
+         * @param language the language enum, must not be {@code null}
+         * @deprecated Use {@link #Builder(LanguageHandler)} for new code
+         */
+        @Deprecated
+        public Builder(Language language){
+            this.language = language;
+            this.languageHandler = language == Language.ENGLISH
+                ? new io.github.zazalng.handler.EnglishLanguageHandler()
+                : new io.github.zazalng.handler.ThaiLanguageHandler();
+        }
+
+        /**
+         * Sets the language handler for text conversion.
+         * <p>
+         * This method controls which language handler is used for conversion.
+         * The handler defines both the conversion logic and language-specific unit words.
          *
          * <p>
          * <strong>Example:</strong>
          * <pre>{@code
          * ThaiBahtConfig config = ThaiBahtConfig.builder()
-         *     .language(Language.ENGLISH)  // Prefix now defaults to "Minus"
+         *     .languageHandler(new EnglishLanguageHandler())
+         *     .build();
+         * }</pre>
+         *
+         * @param handler the language handler, must not be {@code null}
+         * @return this builder for method chaining
+         * @since 2.0.0
+         */
+        public Builder languageHandler(io.github.zazalng.contracts.LanguageHandler handler) {
+            this.languageHandler = handler;
+            // Update language enum for backward compatibility
+            if (handler instanceof io.github.zazalng.handler.EnglishLanguageHandler) {
+                this.language = Language.ENGLISH;
+            } else {
+                this.language = Language.THAI;
+            }
+            return this;
+        }
+
+        /**
+         * Sets the output language for text conversion (backward compatibility).
+         * <p>
+         * This method controls which language handler is used by selecting the appropriate
+         * built-in handler for the language. This is provided for backward compatibility with v1.x code.
+         *
+         * <p>
+         * <strong>Example:</strong>
+         * <pre>{@code
+         * ThaiBahtConfig config = ThaiBahtConfig.builder()
+         *     .language(Language.ENGLISH)
          *     .build();
          * }</pre>
          *
          * @param language the desired output language (THAI or ENGLISH), must not be {@code null}
          * @return this builder for method chaining
          * @since 1.3
+         * @deprecated Use {@link #languageHandler(LanguageHandler)} for new code
          */
+        @Deprecated
         public Builder language(Language language) {
             this.language = language;
+            this.languageHandler = language == Language.ENGLISH
+                ? new io.github.zazalng.handler.EnglishLanguageHandler()
+                : new io.github.zazalng.handler.ThaiLanguageHandler();
             return this;
         }
 
@@ -704,17 +804,17 @@ public final class ThaiBahtConfig {
          * <p>
          * <strong>Example - reusing builder for multiple configurations:</strong>
          * <pre>{@code
-         * ThaiBahtConfig.Builder builder = ThaiBahtConfig.builder(Language.THAI);
+         * ThaiBahtConfig.Builder builder = ThaiBahtConfig.builder(new ThaiLanguageHandler());
          *
          * ThaiBahtConfig config1 = builder.useUnit(true).build();
          * ThaiBahtConfig config2 = builder.useUnit(false).build();
-         * ThaiBahtConfig config3 = builder.language(Language.ENGLISH).build();
+         * ThaiBahtConfig config3 = builder.languageHandler(new EnglishLanguageHandler()).build();
          * }</pre>
          *
          * @return a new immutable {@link ThaiBahtConfig} with the builder's settings
          */
         public ThaiBahtConfig build() {
-            return new ThaiBahtConfig(language, useUnit, formal, negativePrefix, formatTemplate, negativeFormatTemplate);
+            return new ThaiBahtConfig(language, languageHandler, useUnit, formal, negativePrefix, formatTemplate, negativeFormatTemplate);
         }
     }
 }

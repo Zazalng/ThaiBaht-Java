@@ -21,66 +21,78 @@
  * Users should interact with this functionality only through the public API in
  * {@link io.github.zazalng} and {@link io.github.zazalng.contracts} packages.
  *
- * <h2>Package Purpose</h2>
+ * <h2>v2.0.0 Architecture (NEW)</h2>
  * <p>
- * This package contains the internal implementation of the text conversion algorithm that
- * transforms {@link java.math.BigDecimal} monetary amounts into language-specific textual
- * representations. It handles:
+ * Version 2.0.0 introduces a handler-based architecture:
  * <ul>
- *   <li>Amount normalization (precision handling)</li>
+ *   <li><strong>LanguageHandler Interface:</strong> Public interface in contracts package for language implementations</li>
+ *   <li><strong>Built-in Handlers:</strong> ThaiLanguageHandler and EnglishLanguageHandler
+ *       implement the interface with full conversion logic</li>
+ *   <li><strong>TextConverter Router:</strong> Routes conversion requests to the appropriate handler
+ *       (delegating responsibility to handlers instead of routing on enum)</li>
+ *   <li><strong>FormatApplier:</strong> Applies custom format templates (works with handlers)</li>
+ * </ul>
+ *
+ * <h2>Package Contents</h2>
+ * <p>
+ * This package contains the internal implementation of the text conversion algorithm:
+ * <ul>
+ *   <li><strong>TextConverter</strong> - Main routing dispatcher (simplified in v2.0.0)</li>
+ *   <li><strong>ThaiLanguageHandler</strong> (v2.0.0) - Thai conversion implementation</li>
+ *   <li><strong>EnglishLanguageHandler</strong> (v2.0.0) - English conversion implementation</li>
+ *   <li><strong>ThaiConvertHandler</strong> (legacy) - Original Thai logic (kept for reference)</li>
+ *   <li><strong>EnglishConvertHandler</strong> (legacy) - Original English logic (kept for reference)</li>
+ *   <li><strong>FormatApplier</strong> - Custom format template processor</li>
+ * </ul>
+ *
+ * <h2>Handler Responsibility (v2.0.0)</h2>
+ * <p>
+ * In v2.0.0, language handlers take full responsibility for:
+ * <ul>
+ *   <li>Amount normalization (precision handling to 2 decimal places)</li>
  *   <li>Language-specific digit and word conversion</li>
  *   <li>Negative amount prefix handling</li>
- *   <li>Unit word inclusion/exclusion</li>
- *   <li>Multi-language routing and dispatch</li>
+ *   <li>Unit word inclusion/exclusion based on config</li>
+ *   <li>Format template application (if custom format is configured)</li>
+ *   <li>Returning properly formatted text</li>
  * </ul>
  *
- * <h2>Implementation Classes</h2>
+ * <h2>Conversion Process (v2.0.0)</h2>
  * <p>
- * The main implementation class in this package is {@code TextConverter} (or similar),
- * which provides:
- * <ul>
- *   <li><strong>Language-Agnostic Routing:</strong> Routes conversions to appropriate
- *       language-specific handlers based on configuration</li>
- *   <li><strong>Precision Handling:</strong> Normalizes amounts to 2 decimal places
- *       using {@link java.math.RoundingMode#DOWN}</li>
- *   <li><strong>Negative Amount Support:</strong> Extracts sign and applies configured prefix</li>
- *   <li><strong>Language-Specific Conversion:</strong> Handles Thai and English conversion
- *       with language-appropriate linguistic rules</li>
- * </ul>
- *
- * <h2>Conversion Algorithm (Overview)</h2>
- * <p>
- * The conversion process follows these high-level steps:
+ * The simplified v2.0.0 flow:
  * <ol>
- *   <li>Validate input (amount not null)</li>
- *   <li>Normalize amount to 2 decimal places (satang precision)</li>
- *   <li>Extract absolute value for conversion</li>
- *   <li>Route to language-specific converter based on config</li>
- *   <li>Convert integer part (baht) to words</li>
- *   <li>Add unit words if enabled</li>
- *   <li>Convert fractional part (satang) to words</li>
- *   <li>Add fractional unit words if enabled</li>
- *   <li>Apply negative prefix if amount is negative</li>
- *   <li>Return formatted text</li>
+ *   <li>TextConverter.toBahtText() receives ThaiBaht instance</li>
+ *   <li>Validates input (amount not null)</li>
+ *   <li>Delegates to config.getLanguageHandler().convert()</li>
+ *   <li>Handler performs complete conversion</li>
+ *   <li>Returns formatted text</li>
  * </ol>
  *
- * <h2>Time Complexity</h2>
+ * <h2>Before vs After Architecture</h2>
  * <p>
- * The conversion algorithm is O(log n) where n is the magnitude of the amount.
- * This is because:
- * <ul>
- *   <li>Processing is linear in the number of digits</li>
- *   <li>Number of digits grows logarithmically with magnitude</li>
- *   <li>No nested loops or recursive calls with exponential growth</li>
- * </ul>
+ * <strong>v1.4.0 (Old):</strong>
+ * <pre>
+ * TextConverter (switch on Language enum)
+ *   ├─ ThaiConvertHandler (static methods)
+ *   └─ EnglishConvertHandler (static methods)
+ * </pre>
+ * <p>
+ * <strong>v2.0.0 (New):</strong>
+ * <pre>
+ * TextConverter (delegates to handler)
+ *   └─ LanguageHandler (polymorphic dispatch)
+ *       ├─ ThaiLanguageHandler (implements interface)
+ *       ├─ EnglishLanguageHandler (implements interface)
+ *       └─ CustomLanguageHandler (user-implemented, no core changes!)
+ * </pre>
  *
- * <h2>Space Complexity</h2>
+ * <h2>Performance Characteristics</h2>
  * <p>
- * Space usage is O(log n) where n is the magnitude of the amount, limited by:
+ * Conversion algorithm maintains the same complexity as v1.4.0:
  * <ul>
- *   <li>Output string length (proportional to number of digits)</li>
- *   <li>No allocation of large intermediate structures</li>
- *   <li>All processing done with single StringBuffer</li>
+ *   <li><strong>Time Complexity:</strong> O(log n) where n is the magnitude</li>
+ *   <li><strong>Space Complexity:</strong> O(log n) for output string length</li>
+ *   <li><strong>No Performance Regression:</strong> Handler polymorphism has minimal overhead</li>
  * </ul>
  *
  * <h2>Thread Safety</h2>
@@ -93,79 +105,34 @@
  *   <li>Safe for concurrent use without synchronization</li>
  * </ul>
  *
- * <h2>Language-Specific Implementation</h2>
+ * <h2>Creating Custom Handlers</h2>
  * <p>
- * For each supported language, there are dedicated conversion methods:
- * <ul>
- *   <li><strong>Thai:</strong> Implements Thai linguistic rules for digit naming
- *       (e.g., "หนึ่ง" becomes "เอ็ด", "สอง" becomes "ยี่" in specific contexts)</li>
- *   <li><strong>English:</strong> Implements English linguistic rules with standard
- *       number naming conventions (e.g., "twenty-one" for 21)</li>
- * </ul>
- * <p>
- * Each language handler has its own:
- * <ul>
- *   <li>Digit arrays/maps</li>
- *   <li>Integer conversion logic</li>
- *   <li>Fractional (satang) conversion logic</li>
- *   <li>Unit word definitions</li>
- * </ul>
+ * Users can create custom language handlers by implementing {@link io.github.zazalng.contracts.LanguageHandler}:
+ * <pre>{@code
+ *   public class MyLanguageHandler implements LanguageHandler {
+ *       @Override
+ *       public String convert(ThaiBaht baht) {
+ *           // 1. Get amount and config
+ *           // 2. Normalize to 2 decimal places
+ *           // 3. Split into baht and satang parts
+ *           // 4. Convert each part to words
+ *           // 5. Apply configuration options
+ *           // 6. Return formatted text
+ *       }
  *
- * <h2>Adding Support for New Languages</h2>
- * <p>
- * To add a new language, follow these steps:
- * <ol>
- *   <li>Add enum constant to {@link io.github.zazalng.contracts.Language}
- *       with appropriate default prefix</li>
- *   <li>Add language-specific digit arrays/maps</li>
- *   <li>Implement {@code convertTo[Language]()} method following existing pattern</li>
- *   <li>Implement helper methods for integer and fractional conversion</li>
- *   <li>Update routing logic in main converter to dispatch to new language handler</li>
- *   <li>Add comprehensive tests for the new language</li>
- *   <li>Update documentation with language-specific examples</li>
- * </ol>
+ *       // ... implement other 6 required methods
+ *   }
+ * }</pre>
  *
- * <h2>Error Handling</h2>
- * <p>
- * The conversion handlers:
- * <ul>
- *   <li>Validate null inputs and throw {@link java.lang.NullPointerException}</li>
- *   <li>Handle zero amounts gracefully</li>
- *   <li>Support arbitrarily large amounts</li>
- *   <li>Never throw checked exceptions</li>
- * </ul>
+ * This package design allows for unlimited extensibility while keeping the core library clean and maintainable.
  *
- * <h2>Version History</h2>
- * <ul>
- *   <li><strong>v1.0.0:</strong> Initial Thai conversion implementation</li>
- *   <li><strong>v1.3.0:</strong> Multi-language framework introduced, Smart prefix tracking, maintain backward compatibility</li>
- * </ul>
- *
- * <h2>Design Notes</h2>
- * <p>
- * The internal implementation follows these design principles:
- * <ul>
- *   <li><strong>Separation of Concerns:</strong> Conversion logic separated by language</li>
- *   <li><strong>Stateless Design:</strong> No mutable state between invocations</li>
- *   <li><strong>Immutable Configuration:</strong> Configuration passed as immutable parameter</li>
- *   <li><strong>Efficient String Building:</strong> Uses StringBuilder for efficient concatenation</li>
- *   <li><strong>Language Extensibility:</strong> Easy to add new languages without modifying existing code</li>
- * </ul>
- *
- * <h2>Not For Direct Use</h2>
- * <p>
- * This package is internal implementation. Always use the public API:
- * <ul>
- *   <li>{@link io.github.zazalng.ThaiBaht} for conversions</li>
- *   <li>{@link io.github.zazalng.ThaiBahtConfig} for configuration</li>
- *   <li>{@link io.github.zazalng.contracts.Language} for language selection</li>
- * </ul>
- *
- * @see io.github.zazalng.ThaiBaht
- * @see io.github.zazalng.ThaiBahtConfig
- * @see io.github.zazalng.contracts.Language
- * @since 1.0
- * @version 1.3.0
+ * @see io.github.zazalng.contracts.LanguageHandler
+ * @see io.github.zazalng.handler.ThaiLanguageHandler
+ * @see io.github.zazalng.handler.EnglishLanguageHandler
+ * @see io.github.zazalng.handler.TextConverter
  * @author Zazalng
+ * @since 1.0
+ * @version 2.0.0
  */
 package io.github.zazalng.handler;
+

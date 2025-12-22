@@ -7,47 +7,38 @@
 Effortlessly convert any Java `BigDecimal` into fully accurate and beautifully formatted **Thai Baht text** in multiple languages.  
 This library is designed for **enterprise systems**, **payment processors**, **e-tax invoices**, **Thai government forms**, and any application requiring monetary wording conversion.
 
+> **✨ v2.0.0 NEW**: Completely redesigned architecture with the pluggable `LanguageHandler` interface. You can now add **any** language without waiting for library updates or modifying core code.
+
 ---
 
 ## 🚀 Features
 
+### ✔ Extensible Language Architecture (v2.0.0+)
+- **Pluggable Interface**: The new `LanguageHandler` interface allows you to define conversion logic for any language.
+- **Decoupled Design**: Languages are no longer locked to a hardcoded Enum.
+- **Zero Core Modification**: Add support for Lao, Khmer, Burmese, or domain-specific jargon purely in your own code.
+
 ### ✔ Accurate Thai Baht Wording
 - Correct use of Thai numerical grammar rules:
-  - *"เอ็ด"* (ones in compounds like 101 → "หนึ่งร้อยเอ็ด")
-  - *"ยี่"* (twenties like 20 → "ยี่สิบ")
-  - *Silent "หนึ่ง"* in tens (10 → "สิบ", not "หนึ่งสิบ")
-  - *Repeating "ล้าน"* for millions and beyond
-- Matches official Thai government invoice conventions
+    - *"เอ็ด"* (ones in compounds like 101 → "หนึ่งร้อยเอ็ด")
+    - *"ยี่"* (twenties like 20 → "ยี่สิบ")
+    - *Silent "หนึ่ง"* in tens (10 → "สิบ", not "หนึ่งสิบ")
+    - *Repeating "ล้าน"* for millions and beyond
+- Matches official Thai government invoice conventions.
 
 ### ✔ Multi-Language Support
-- **Thai** (default) - Complete Thai linguistic rule implementation
-- **English** - Standard English number naming with proper formatting
-- Extensible architecture for adding more languages
-- Each language fully isolated with dedicated conversion logic
+- **Thai** (Default) - via `ThaiLanguageHandler`
+- **English** - via `EnglishLanguageHandler`
+- **Custom** - via your own implementation of `LanguageHandler`
 
 ### ✔ Correct Satang Handling
-- Outputs `ถ้วน` (Thai) or `Only` (English) when satang = 0
-- Properly converts fractional amounts when decimals exist
-- Precise 2-decimal place normalization using BigDecimal
-
-### ✔ Flexible Negative Number Support
-- Customizable prefix for negative amounts
-- Language-specific default prefixes ("ลบ" for Thai, "Minus" for English)
-- Auto-update prefixes when switching languages (unless explicitly set)
+- Outputs `ถ้วน` (Thai) or `Only` (English) when satang = 0.
+- Precise 2-decimal place normalization using BigDecimal.
 
 ### ✔ Highly Configurable Output
-- Include/omit currency unit words (`บาท`, `สตางค์`, `ถ้วน`)
-- Custom format templates with named placeholders (v1.4.0+)
-- Formal wording modes (reserved for future use)
-- Support for both positive and negative amount custom formats
-
-### ✔ Thread-Safe & Immutable
-- All configuration objects are immutable and thread-safe
-- Stateless conversion algorithm
-- Safe for concurrent use without synchronization
-
-### ✔ Pure Java — No Dependencies
-Minimal, lightweight, zero external dependencies. Works on **Java 8+**.
+- **Flexible Negative Support**: Custom prefixes (e.g., "ติดลบ", "Minus").
+- **Custom Templates**: Define named placeholders like `{INTEGER}`, `{UNIT}`, `{SATANG}`.
+- **Thread-Safe**: All configuration objects are immutable and safe for concurrent use.
 
 ---
 
@@ -58,13 +49,13 @@ Minimal, lightweight, zero external dependencies. Works on **Java 8+**.
 <dependency>
     <groupId>io.github.zazalng</groupId>
     <artifactId>thai-baht</artifactId>
-    <version>1.4.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
 ### **Gradle:**
 ```gradle
-implementation 'io.github.zazalng:thai-baht:1.4.0'
+implementation 'io.github.zazalng:thai-baht:2.0.0'
 ```
 
 ### **Local Build:**
@@ -76,7 +67,7 @@ mvn clean install
 
 ## 🔧 Quick Start
 
-### **One-Line Conversion**
+### **One-Line Conversion (v1.4.0 Compatible)**
 ```java
 import java.math.BigDecimal;
 import io.github.zazalng.ThaiBaht;
@@ -84,6 +75,55 @@ import io.github.zazalng.ThaiBaht;
 // Thai (default)
 String thai = ThaiBaht.of(new BigDecimal("4520.75"));
 // → "สี่พันห้าร้อยยี่สิบบาทเจ็ดสิบห้าสตางค์"
+```
+
+### **v2.0.0: Using Built-in Handlers (Recommended)**
+```java
+import java.math.BigDecimal;
+import io.github.zazalng.ThaiBaht;
+import io.github.zazalng.handler.ThaiLanguageHandler;
+
+// Explicit handler syntax (v2.0.0+)
+ThaiBahtConfig config = ThaiBahtConfig.builder(new ThaiLanguageHandler())
+    .useUnit(true)
+    .build();
+
+String text = ThaiBaht.of(new BigDecimal("100.50"), config);
+// → "หนึ่งร้อยห้าสิบสตางค์"
+```
+
+### **v2.0.0: Adding Custom Languages (NEW!)**
+```java
+import io.github.zazalng.contracts.LanguageHandler;
+
+// Create your own language handler - no core changes needed!
+public class LaotianLanguageHandler implements LanguageHandler {
+    @Override
+    public String convert(ThaiBaht baht) { /* your logic */ }
+    
+    @Override
+    public String getLanguageCode() { return "lo"; }
+    
+    @Override
+    public String getLanguageName() { return "Laotian"; }
+    
+    @Override
+    public String getUnitWord() { return "ກີບ"; }
+    
+    @Override
+    public String getExactWord() { return "ເທົ່າ"; }
+    
+    @Override
+    public String getSatangWord() { return "ແອັດ"; }
+    
+    @Override
+    public String getNegativePrefix() { return "ລົບ"; }
+}
+
+// Use immediately - no core library changes!
+ThaiBahtConfig config = ThaiBahtConfig.builder(new LaotianLanguageHandler())
+    .useUnit(true)
+    .build();
 ```
 
 ### **Instance-Based API**
@@ -100,10 +140,9 @@ String result = converter
 
 ### **English Output**
 ```java
-import io.github.zazalng.contracts.Language;
-import io.github.zazalng.ThaiBahtConfig;
+import io.github.zazalng.handler.EnglishLanguageHandler;
 
-ThaiBahtConfig config = ThaiBahtConfig.builder(Language.ENGLISH)
+ThaiBahtConfig config = ThaiBahtConfig.builder(new EnglishLanguageHandler())
     .useUnit(true)
     .build();
 
@@ -113,8 +152,9 @@ String english = ThaiBaht.of(new BigDecimal("525.50"), config);
 
 ### **Custom Configuration**
 ```java
-ThaiBahtConfig config = ThaiBahtConfig.builder()
-    .language(Language.THAI)
+import io.github.zazalng.handler.ThaiLanguageHandler;
+
+ThaiBahtConfig config = ThaiBahtConfig.builder(new ThaiLanguageHandler())
     .useUnit(true)
     .setPrefix("ติดลบ")  // Custom negative prefix
     .build();
@@ -125,7 +165,7 @@ String negative = ThaiBaht.of(new BigDecimal("-100.50"), config);
 
 ### **Custom Format Templates (v1.4.0+)**
 ```java
-ThaiBahtConfig config = ThaiBahtConfig.builder()
+ThaiBahtConfig config = ThaiBahtConfig.builder(new ThaiLanguageHandler())
     .setFormatTemplate("{INTEGER}{UNIT}{EXACT}{FLOAT?{FLOAT}{SATANG}}")
     .build();
 
@@ -141,6 +181,94 @@ String large = ThaiBaht.of(new BigDecimal("1250000000.50"));
 
 ---
 
+## ⚡ v2.0.0 Breaking Changes & Migration
+
+### **What Changed?**
+Version 2.0.0 replaces the **Language enum-based system** with a **pluggable LanguageHandler interface**. This enables unlimited language extensibility without modifying core code.
+
+| Aspect | v1.4.0 | v2.0.0 |
+|--------|--------|--------|
+| Language Selection | `Language` enum | `LanguageHandler` interface |
+| Extensibility | Limited (enum) | Unlimited (handlers) |
+| Adding Languages | Modify core | Create handler only |
+| Constructor | Direct | Builder pattern only |
+| Backward Compat | N/A | Soft (builders work) |
+
+### **Breaking Changes**
+
+1. **Constructor Signature Changed**
+   ```java
+   // ❌ v1.4.0 style - won't compile
+   ThaiBahtConfig config = new ThaiBahtConfig(Language.THAI, true, true, null, null, null);
+   
+   // ✅ v2.0.0 requires builder pattern
+   ThaiBahtConfig config = ThaiBahtConfig.builder(new ThaiLanguageHandler())
+       .useUnit(true)
+       .build();
+   ```
+
+2. **Factory Method Signature Changed**
+   ```java
+   // ⚠️ Soft break - still works via backward compatibility
+   ThaiBahtConfig config = ThaiBahtConfig.builder(Language.THAI)
+       .useUnit(true)
+       .build();
+   // Internally creates ThaiLanguageHandler automatically
+   ```
+
+### **Migration Path**
+
+#### **For v1.4.0 Users → v2.0.0**
+
+**Option 1: No Changes Required (Soft Compatibility)**
+```java
+// v1.4.0 code - still works in v2.0.0
+ThaiBahtConfig config = ThaiBahtConfig.builder(Language.THAI)
+    .useUnit(true)
+    .build();
+
+// Behind the scenes: 
+// Language.THAI is automatically converted to new ThaiLanguageHandler()
+```
+
+**Option 2: Recommended - Use New Handler Syntax**
+```java
+// v2.0.0 recommended approach
+import io.github.zazalng.handler.ThaiLanguageHandler;
+
+ThaiBahtConfig config = ThaiBahtConfig.builder(new ThaiLanguageHandler())
+    .useUnit(true)
+    .build();
+```
+
+#### **For New v2.0.0 Projects**
+
+Use the new handler-based syntax for clarity:
+```java
+// Clear and explicit
+ThaiBahtConfig thai = ThaiBahtConfig.builder(new ThaiLanguageHandler())
+    .useUnit(true)
+    .build();
+
+ThaiBahtConfig english = ThaiBahtConfig.builder(new EnglishLanguageHandler())
+    .useUnit(true)
+    .build();
+```
+
+### **Why Break Backward Compatibility?**
+
+The Language enum architecture had a fundamental limitation: **you couldn't add new languages without modifying core code**. Version 2.0.0 solves this with the `LanguageHandler` interface, which is the proper long-term solution.
+
+See [IMPLEMENTATION_SUMMARY_v2.0.0.md](IMPLEMENTATION_SUMMARY_v2.0.0.md) for complete details.
+
+### **LTS for Version 1.x.x?**
+
+As enum base maintainer and community can still provide their local logic into version 1.x.x because what it needs to be add is what it needs to be created.
+
+e.g. I want to add Japan support language, **action :** modify Language enum -> create Logic.java -> modify switcher in TextConverter.java -> push up
+
+---
+
 ## 📚 Documentation
 
 ### Comprehensive Javadocs
@@ -148,7 +276,8 @@ Full API documentation with detailed explanations, usage examples, and design pa
 
 - **[ThaiBaht](src/main/java/io/github/zazalng/ThaiBaht.java)** - Main conversion API
 - **[ThaiBahtConfig](src/main/java/io/github/zazalng/ThaiBahtConfig.java)** - Configuration builder
-- **[Language](src/main/java/io/github/zazalng/contracts/Language.java)** - Supported languages
+- **[LanguageHandler](src/main/java/io/github/zazalng/contracts/LanguageHandler.java)** - Language handler interface (v2.0.0+)
+- **[Language](src/main/java/io/github/zazalng/contracts/Language.java)** - Supported languages (backward compat enum)
 - **[FormatTemplate](src/main/java/io/github/zazalng/utils/FormatTemplate.java)** - Custom format support (v1.4.0+)
 
 ### Key Classes
@@ -240,11 +369,14 @@ src/main/java/io/github/zazalng/
 ├── ThaiBaht.java                    # Main public API
 ├── ThaiBahtConfig.java              # Configuration builder
 ├── contracts/
-│   └── Language.java                # Supported languages enum
+│   ├── Language.java                # Supported languages enum
+│   └── LanguageHandler.java         # Interface languages control
 ├── handler/                         # Internal implementation
 │   ├── TextConverter.java           # Conversion router
-│   ├── ThaiConvertHandler.java      # Thai conversion logic
-│   ├── EnglishConvertHandler.java   # English conversion logic
+│   ├── ThaiConvertHandler.java      # Thai conversion logic (Old)
+│   ├── ThaiLanguageHandler.java     # Thai conversion logic (New)
+│   ├── EnglishConvertHandler.java   # English conversion logic (Old)
+│   ├── EnglishLanguageHandler.java  # English conversion logic (New)
 │   ├── FormatApplier.java           # Custom format processor
 │   └── package-info.java            # Handler package docs
 ├── utils/
@@ -263,21 +395,28 @@ src/test/java/io/github/zazalng/v1/
 
 ## 📋 Version History
 
-### v1.4.0 (Latest)
+### v2.0.0 - Language Interface (Selfish Relay)
+- ✨ **New**: `LanguageHandler` interface for unlimited language extensibility
+- ✨ **New**: `ThaiLanguageHandler` and `EnglishLanguageHandler` implementations
+- ✨ **Breaking**: Constructor signature changed (builder pattern enforced)
+- ✨ **Benefit**: Zero enum coupling - add ANY language without core modifications
+- ✨ **Compat**: v1.4.0 code still works via soft backward compatibility
+
+### v1.4.0 - Custom Format Template
 - ✨ Custom format templates with named placeholders
 - ✨ Conditional placeholder support
 - ✨ Separate positive/negative format templates
 
-### v1.3.0
+### v1.3.0 - Multi-Language (Community Relay)
 - ✨ Multi-language support (Thai + English)
 - ✨ Language-specific default prefixes
 - ✨ Auto-updating prefix behavior
 
-### v1.2.0
+### v1.2.0 - Custom Config
 - ✨ Improved number handling
 - 🐛 Various bug fixes
 
-### v1.0.0
+### v1.0.0 - Initial Release
 - Initial release
 - Thai Baht conversion
 
@@ -390,6 +529,9 @@ A: Fully supported with customizable prefixes for each language.
 
 **Q: Can I customize the output format?**  
 A: Yes! v1.4.0+ supports custom format templates with named placeholders.
+
+**Q: Will major version '2.0.0+' carry on legacy language enum base from v1.x.x logic by community?**  
+A: No, Major update for 2.0.0+ build for selfish dev to maintain lightweight. (I mean if You want just Thai and English why do I have to spare resource for other 95+ language that I won't use it anyway?)
 
 ---
 

@@ -1,19 +1,34 @@
+/*
+ * Copyright 2025 Napapon Kamanee
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.github.zazalng.handler;
 
 import io.github.zazalng.ThaiBaht;
 import io.github.zazalng.ThaiBahtConfig;
-import io.github.zazalng.contracts.Language;
+import io.github.zazalng.contracts.LanguageHandler;
 import io.github.zazalng.utils.FormatTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 /**
- * Internal Thai language converter for converting numeric amounts to Thai Baht text.
+ * Thai language implementation of {@link LanguageHandler}.
  * <p>
- * This package-private handler implements the specialized logic for converting
- * {@link BigDecimal} amounts to their Thai textual representation. It is not intended
- * for direct use; instead, access through the public {@link ThaiBaht} API.
+ * This handler converts numeric amounts to Thai textual representation using traditional
+ * Thai numerical conventions and grammar rules. It implements the complete conversion logic
+ * previously found in {@code ThaiConvertHandler}.
  *
  * <h2>Thai Grammar Rules Implemented</h2>
  * <p>
@@ -28,101 +43,79 @@ import java.math.RoundingMode;
  *       for groups of millions (e.g., 1,000,000 = "หนึ่งล้าน", 1,000,001,000 = "หนึ่งล้านหนึ่งล้าน")</li>
  * </ul>
  *
- * <h2>Conversion Process</h2>
- * <p>
- * The conversion follows these high-level steps:
- * <ol>
- *   <li>Normalize amount to 2 decimal places using {@link java.math.RoundingMode#DOWN}</li>
- *   <li>Extract absolute value to handle magnitude separately</li>
- *   <li>Split into integer (baht) and fractional (satang) parts</li>
- *   <li>Convert each part using specialized Thai digit conversion methods</li>
- *   <li>Apply configuration options (unit words, custom format)</li>
- *   <li>Handle negative prefix if amount is negative</li>
- * </ol>
- *
- * <h2>Number Conversion Methods</h2>
- * <p>
- * The converter uses specialized methods for different numeric ranges:
+ * <h2>Unit Words</h2>
  * <ul>
- *   <li><strong>convertThaiInteger():</strong> Handles full integers including millions
- *       (recursively handles millions and remainder)</li>
- *   <li><strong>convertThaiUnderMillion():</strong> Handles 1-999,999 using positional system
- *       (แสน, หมื่น, พัน, ร้อย, สิบ, หน่วย)</li>
- *   <li><strong>convertThaiTwoDigits():</strong> Handles 1-99 for satang conversion (special handling for tens)</li>
- * </ul>
- *
- * <h2>Satang Handling</h2>
- * <p>
- * Satang (fractional part) is handled as follows:
- * <ul>
- *   <li>When satang = 0: Output "ถ้วน" (Only/Exact) if units are enabled</li>
- *   <li>When satang > 0: Convert using specialized two-digit converter and append "สตางค์"</li>
- *   <li>Uses {@link java.math.RoundingMode#DOWN} for truncation (100.999 → 100.99)</li>
- * </ul>
- *
- * <h2>Configuration Support</h2>
- * <p>
- * This handler respects all {@link ThaiBahtConfig} options:
- * <ul>
- *   <li>Unit words inclusion (บาท, สตางค์, ถ้วน)</li>
- *   <li>Custom format templates via {@link FormatApplier}</li>
- *   <li>Negative prefix configuration (defaults to "ลบ" for Thai)</li>
- *   <li>Formal wording mode (reserved for future use)</li>
+ *   <li>"บาท" - Currency unit (Baht)</li>
+ *   <li>"สตางค์" - Fractional unit (Satang)</li>
+ *   <li>"ถ้วน" - Exact/full indicator (used when satang is zero)</li>
  * </ul>
  *
  * <h2>Examples</h2>
- * <p>
- * <strong>Thai conversion examples:</strong>
  * <pre>{@code
- * // With units enabled (default)
- * "100.00"  → "หนึ่งร้อยบาทถ้วน"     (hundred baht exact)
- * "101.01"  → "หนึ่งร้อยเอ็ดบาทหนึ่งสตางค์"  (hundred one baht one satang)
- * "1234.56" → "หนึ่งพันสองร้อยสามสิบสี่บาทห้าสิบหกสตางค์"
+ * handler.convert(ThaiBaht.of(new BigDecimal("100.00"), config));
+ * // Output: "หนึ่งร้อยบาทถ้วน"
  *
- * // Without units
- * "100.00"  → "หนึ่งร้อย"
- * "1000.50" → "หนึ่งพันห้าสิบ"
+ * handler.convert(ThaiBaht.of(new BigDecimal("1234.56"), config));
+ * // Output: "หนึ่งพันสองร้อยสามสิบสี่บาทห้าสิบหกสตางค์"
  * }</pre>
  *
- * @implNote This class is package-private and stateless. It uses static methods only.
- *           The conversion algorithm maintains no mutable state and is thread-safe.
- * @see ThaiBaht
- * @see ThaiBahtConfig
- * @see TextConverter
- * @see FormatApplier
+ * @see LanguageHandler
+ * @see ThaiConvertHandler
  * @author Zazalng
- * @since 1.0
- * @version 1.4.0
+ * @since 2.0.0
  */
-@Deprecated
-public final class ThaiConvertHandler {
-    /**
-     * Default negative prefix for Thai
-     */
+public class ThaiLanguageHandler implements LanguageHandler {
     private static final String[] THAI_DIGITS = {
             "ศูนย์", "หนึ่ง", "สอง", "สาม", "สี่",
             "ห้า", "หก", "เจ็ด", "แปด", "เก้า"
     };
 
-    /**
-     * Private constructor to prevent instantiation.
-     * This is a utility class with only static methods.
-     */
-    private ThaiConvertHandler() {}
-
-    static String convert(ThaiBaht baht){
+    @Override
+    public String convert(ThaiBaht baht) {
+        if (baht == null || baht.getAmount() == null) {
+            throw new IllegalArgumentException("baht and amount must not be null");
+        }
         return convertToThai(baht.getAmount(), baht.getConfig());
     }
 
-    private static String convertToThai(BigDecimal amount, ThaiBahtConfig config) {
-        // normalize to 2 decimal places (satang) - truncate toward floor for positive/negative consistent behaviour
+    @Override
+    public String getLanguageCode() {
+        return "th";
+    }
+
+    @Override
+    public String getLanguageName() {
+        return "Thai";
+    }
+
+    @Override
+    public String getUnitWord() {
+        return "บาท";
+    }
+
+    @Override
+    public String getExactWord() {
+        return "ถ้วน";
+    }
+
+    @Override
+    public String getSatangWord() {
+        return "สตางค์";
+    }
+
+    @Override
+    public String getNegativePrefix() {
+        return "ลบ";
+    }
+
+    private String convertToThai(BigDecimal amount, ThaiBahtConfig config) {
+        // normalize to 2 decimal places (satang) - truncate toward floor
         BigDecimal normalized = amount.setScale(2, RoundingMode.DOWN);
 
         BigDecimal abs = normalized.abs();
 
         long baht = abs.longValue();
         int satang = abs.subtract(new BigDecimal(baht)).movePointRight(2).intValue();
-        Language lang = config.getLanguage();
 
         // Generate text for baht part
         String bahtText;
@@ -147,30 +140,30 @@ public final class ThaiConvertHandler {
         String result;
         if (template != null) {
             // Apply custom format with negative prefix and satang value
-            String negPrefix = config.getNegativePrefix().isEmpty() ? lang.getPrefix() : config.getNegativePrefix();
-            result = FormatApplier.apply(template, bahtText, satangText, satang, lang, negPrefix, THAI_DIGITS[0]);
+            String negPrefix = config.getNegativePrefix().isEmpty() ? getNegativePrefix() : config.getNegativePrefix();
+            result = FormatApplier.apply(template, bahtText, satangText, satang, this, negPrefix, THAI_DIGITS[0]);
         } else {
             // Use standard formatting
             StringBuilder sb = new StringBuilder();
 
             if (config.isUseUnit()) {
-                sb.append(bahtText).append(lang.getUnit());
+                sb.append(bahtText).append(getUnitWord());
             } else {
                 sb.append(bahtText);
             }
 
             if (satang == 0) {
-                if (config.isUseUnit()) sb.append(lang.getExact());
+                if (config.isUseUnit()) sb.append(getExactWord());
             } else {
                 sb.append(satangText);
-                if (config.isUseUnit()) sb.append(lang.getSatang());
+                if (config.isUseUnit()) sb.append(getSatangWord());
             }
 
             result = sb.toString();
 
             // Apply negative prefix only if no custom format is used
             if (isNegative) {
-                return (config.getNegativePrefix().isEmpty() ? lang.getPrefix() : config.getNegativePrefix()) + result;
+                return (config.getNegativePrefix().isEmpty() ? getNegativePrefix() : config.getNegativePrefix()) + result;
             }
         }
 
@@ -178,13 +171,11 @@ public final class ThaiConvertHandler {
     }
 
     // convert Thai full integer (handles repeating 'ล้าน' segments)
-    private static String convertThaiInteger(long number) {
+    private String convertThaiInteger(long number) {
         if (number == 0) return THAI_DIGITS[0];
-
 
         StringBuilder sb = new StringBuilder();
         long million = 1_000_000L;
-
 
         if (number >= million) {
             long high = number / million;
@@ -200,7 +191,7 @@ public final class ThaiConvertHandler {
     }
 
     // convert Thai numbers from 1..999_999
-    private static String convertThaiUnderMillion(long number) {
+    private String convertThaiUnderMillion(long number) {
         // positions: แสน(100000), หมื่น(10000), พัน(1000), ร้อย(100), สิบ(10), หน่วย(1)
         int[] divisors = {100000, 10000, 1000, 100, 10, 1};
         String[] posWords = {"แสน", "หมื่น", "พัน", "ร้อย", "สิบ", ""};
@@ -239,7 +230,7 @@ public final class ThaiConvertHandler {
     }
 
     // convert Thai 1..99 for satang
-    private static String convertThaiTwoDigits(int n) {
+    private String convertThaiTwoDigits(int n) {
         if (n < 0 || n > 99) throw new IllegalArgumentException("n must be between 0 and 99");
         if (n == 0) return THAI_DIGITS[0];
         if (n < 10) return THAI_DIGITS[n];
@@ -266,3 +257,4 @@ public final class ThaiConvertHandler {
         return sb.toString();
     }
 }
+
