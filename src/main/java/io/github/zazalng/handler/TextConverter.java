@@ -97,32 +97,28 @@ public final class TextConverter {
      * <p>
      * This method is the core internal conversion entry point for the library. It takes a {@link ThaiBaht}
      * instance containing an amount and configuration, validates the inputs, and routes the conversion
-     * to the appropriate language-specific handler. The result respects all configuration options.
+     * to the language handler in the configuration. The result respects all configuration options.
      *
- * <h2>Conversion Process</h2>
- * <p>
- * The conversion process follows these steps:
- * <ol>
- *   <li>Receives a {@link ThaiBaht} instance containing an amount and configuration</li>
- *   <li>Validates that the amount and configuration are present</li>
- *   <li>Routes to the appropriate language handler:
- *       <ul>
- *         <li>{@code THAI} → {@link ThaiConvertHandler#convert(ThaiBaht)}</li>
- *         <li>{@code ENGLISH} → {@link EnglishConvertHandler#convert(ThaiBaht)}</li>
- *       </ul>
- *   </li>
- *   <li>Returns the formatted text from the language handler</li>
- * </ol>
- *
- * <h2>Amount Normalization</h2>
+     * <h2>Conversion Process</h2>
+     * <p>
+     * The conversion process follows these steps:
+     * <ol>
+     *   <li>Receives a {@link ThaiBaht} instance containing an amount and configuration</li>
+     *   <li>Validates that the amount and configuration are present</li>
+     *   <li>Routes to the language handler stored in the configuration via
+     *       {@link ThaiBahtConfig#getLanguageHandler()}</li>
+     *   <li>Returns the formatted text from the language handler</li>
+     * </ol>
+     *
+     * <h2>Amount Normalization</h2>
      * <p>
      * The amount is normalized to 2 decimal places (satang precision) using {@link RoundingMode#DOWN}.
      * This ensures that amounts like 100.567 are truncated to 100.56 (56 satang), not rounded.
      *
      * <h2>Negative Handling</h2>
      * <p>
-     * Negative amounts are handled by each language handler by extracting the absolute value
-     * and prepending the configured negative prefix (or language default if not specified).
+     * Negative amounts are handled by the language handler by extracting the absolute value
+     * and prepending the configured negative prefix (or handler's default if not specified).
      *
      * <p>
      * <strong>Example conversions:</strong>
@@ -133,7 +129,7 @@ public final class TextConverter {
      * // Result: "หนึ่งพันสองร้อยสามสิบสี่บาทห้าสิบหกสตางค์"
      *
      * // English with units
-     * ThaiBahtConfig engConfig = ThaiBahtConfig.builder(Language.ENGLISH)
+     * ThaiBahtConfig engConfig = ThaiBahtConfig.builder(new EnglishLanguageHandler())
      *     .useUnit(true).build();
      * ThaiBaht baht2 = ThaiBaht.create(new BigDecimal("500.50"), engConfig);
      * String english = TextConverter.toBahtText(baht2);
@@ -150,25 +146,13 @@ public final class TextConverter {
      * @throws IllegalArgumentException if the amount is {@code null}
      * @see ThaiBaht
      * @see ThaiBahtConfig
-     * @see Language
+     * @since 2.0.0
      */
     public static String toBahtText(ThaiBaht baht) {
         if (baht.getAmount() == null) throw new IllegalArgumentException("amount must not be null");
         if (baht.getConfig() == null) baht.setConfig(ThaiBahtConfig.defaultConfig());
-        String result;
 
-        // Route to appropriate language converter
-        switch(baht.getConfig().getLanguage()){
-            case THAI:
-                result = ThaiConvertHandler.convert(baht);
-                break;
-            case ENGLISH:
-                result = EnglishConvertHandler.convert(baht);
-                break;
-            default:
-                throw new IllegalArgumentException("Encounter an unsupported Language, "+baht.getConfig().getClass().getName());
-        }
-
-        return result;
+        // Get the language handler from configuration and convert
+        return baht.getConfig().getLanguageHandler().convert(baht);
     }
 }

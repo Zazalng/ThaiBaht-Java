@@ -16,6 +16,7 @@
 package io.github.zazalng.handler;
 
 import io.github.zazalng.contracts.Language;
+import io.github.zazalng.contracts.LanguageHandler;
 import io.github.zazalng.utils.FormatTemplate;
 
 /**
@@ -151,6 +152,81 @@ public final class FormatApplier {
     private FormatApplier() {}
 
     /**
+     * Applies a format template by replacing named placeholders with actual values using a LanguageHandler.
+     * <p>
+     * This method processes the format template string, replacing all supported placeholders with
+     * their corresponding values from the provided LanguageHandler. It handles both standard and
+     * conditional placeholders, respecting the language-specific formatting conventions.
+     *
+     * <h2>Placeholder Substitution</h2>
+     * <p>
+     * The method performs substitutions in the following order:
+     * <ol>
+     *   <li>Conditional placeholders ({@code {FLOAT?...}} and {@code {SATANG?...}}): Evaluated first
+     *       with content shown only if satang is non-zero</li>
+     *   <li>Exact value placeholder ({@code {EXACT}}): Replaced based on satang value</li>
+     *   <li>Standard placeholders: {@code {INTEGER}}, {@code {FLOAT}}, {@code {UNIT}},
+     *       {@code {SATANG}}, {@code {NEGPREFIX}}</li>
+     * </ol>
+     *
+     * @param template the FormatTemplate containing the format string with named placeholders,
+     *                 must not be {@code null}
+     * @param bahtText the text representation of the baht (integer) part, replaces {@code {INTEGER}}
+     * @param satangText the text representation of the satang (fractional) part, replaces {@code {FLOAT}}
+     * @param satangValue the numeric satang value for conditional logic evaluation
+     * @param handler the LanguageHandler providing currency units and conventions
+     * @param negativePrefix the negative prefix for this configuration (replaces {@code {NEGPREFIX}})
+     * @param zeroText the language-specific zero representation used for conditional comparison
+     * @return the formatted string with all placeholders replaced, never {@code null}
+     * @throws IllegalArgumentException if template or handler is null
+     * @since 2.0.0
+     */
+    static String apply(
+            FormatTemplate template,
+            String bahtText,
+            String satangText,
+            int satangValue,
+            LanguageHandler handler,
+            String negativePrefix,
+            String zeroText
+    ) {
+        if (template == null) {
+            throw new IllegalArgumentException("Template must not be null");
+        }
+        if (handler == null) {
+            throw new IllegalArgumentException("LanguageHandler must not be null");
+        }
+
+        String result = template.getTemplate();
+
+        String currencyUnit = handler.getUnitWord();
+        String exactValue = handler.getExactWord();
+        String satangUnit = handler.getSatangWord();
+        String prefix = (negativePrefix == null || negativePrefix.isEmpty())
+                ? handler.getNegativePrefix() : negativePrefix;
+
+        // Process conditionals first
+        result = processConditionalPlaceholder(result, "{FLOAT?", satangText, zeroText);
+        result = processConditionalPlaceholder(result, "{SATANG?", satangText, zeroText);
+
+        // Replace {EXACT}
+        if (satangValue == 0) {
+            result = result.replace("{EXACT}", exactValue);
+        } else {
+            result = result.replace("{EXACT}", "");
+        }
+
+        // Replace standard placeholders
+        result = result.replace("{INTEGER}", bahtText);
+        result = result.replace("{FLOAT}", satangText);
+        result = result.replace("{UNIT}", currencyUnit);
+        result = result.replace("{SATANG}", satangUnit);
+        result = result.replace("{NEGPREFIX}", prefix);
+
+        return result;
+    }
+
+    /**
      * Applies a format template by replacing named placeholders with actual values.
      * <p>
      * This method processes the format template string, replacing all supported placeholders with
@@ -229,7 +305,9 @@ public final class FormatApplier {
      * @return the formatted string with all placeholders replaced, never {@code null}
      * @throws IllegalArgumentException if template is null
      * @since 1.4.0
+     * @deprecated Use {@link #apply(FormatTemplate, String, String, int, LanguageHandler, String, String)} instead
      */
+    @Deprecated
     static String apply(
             FormatTemplate template,
             String bahtText,

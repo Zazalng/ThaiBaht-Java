@@ -120,6 +120,7 @@ package io.github.zazalng.contracts;
  * @author Zazalng
  * @since 1.3.0
  */
+@Deprecated
 public enum Language {
     /**
      * Thai language output.
